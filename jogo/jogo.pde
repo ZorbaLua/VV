@@ -21,7 +21,7 @@ void draw() {
 
   background(255);
   if (frameCount % (3*60) == 0) { pontos.add(new Vaga(0)); }
-  
+
   for (int i = pontos.size()-1; i>=0; i--) {
     Vaga m = pontos.get(i);
     m.update();
@@ -32,7 +32,7 @@ void draw() {
     jog.update();
     jog.display();
   }
-  
+
   drawPlayersStats();
 }
 
@@ -66,14 +66,14 @@ class Ponto {
   //cor
   color INK = #008000, OUTLINE = 0;
   float BOLD = 2.0;
-  
+
   //posicao
   PVector location;
   PVector velocity;
   PVector acceleration;
   float topspeed;
   int radius;
-  
+
 
   Ponto() {
     location = new PVector(width/2,height/2);
@@ -110,13 +110,15 @@ class Jogador extends Ponto {
 
   Jogador(int ind) {
     energia = 50;
-    if(ind == 0){
-      location = new PVector(width/2-100,height/2);
+
+    if (ind == 0) {
+      location = new PVector( width/2-100, height/2);
       rotation = PI/2;
     } else {
-      location = new PVector(width/2+100,height/2);
+      location = new PVector( width/2+100, height/2);
       rotation = 3*PI/2;
     }
+
     velocity = new PVector(0,0);
     acceleration = new PVector(0,0);
     topspeed = 1.5;
@@ -126,29 +128,36 @@ class Jogador extends Ponto {
   }
 
   void update() {
+
     if (rotation > 2*PI) { rotation -= 2*PI; }
     if (rotation < 2*PI) { rotation += 2*PI; }
+
     if (energia < 100) { energia += 1; }
     PVector dir = new PVector(location.x, location.y);
 
-    if (andar) {
-      if (energia >= 30) {
-        dir.x += sin(rotation)*30;
-        dir.y += cos(rotation)*30;
-        energia -= 30;
-      }
+    if ( location.x < 0 || location.x > width || location.y < 0 || location.y > height ) {
+      location.x = width/2; location.y = height/2;
+      acceleration.x = 0; acceleration.y = 0;
+      velocity.x = 0; velocity.y = 0;
+      Jogador.this.vida -= 1;
+    }
+
+    if (andar && energia >= 30) {
+      dir.x += sin(rotation)*30;
+      dir.y += cos(rotation)*30;
+      energia -= 30;
     }
 
     this.acceleration = PVector.sub(dir,location);
     acceleration.setMag(0.5);
-    
+
     /* Isto seria nas Vagas nao no jogador xD querias mata las com o cursor?
-    
+
     if ( sqrt(pow(location.x - mouseX, 2) + pow(location.y - mouseY, 2)) < 10 ) {
       pontos.remove(this);
     }
     */
-    
+
     this.update_pos();
   }
 
@@ -176,7 +185,7 @@ void setMove(int key, boolean b) {
       case LEFT:  jogadores[0].rotation += 0.3; break;
       case 'D':   jogadores[1].rotation -= 0.3; break;
       case RIGHT: jogadores[0].rotation -= 0.3; break;
-      
+
       default: break;
     }
 }
@@ -189,60 +198,60 @@ class Vaga extends Ponto {
   int Classe; // 0 - vermelhas; 1 - verdes;
 
   Vaga(int classe) {
-    float x = random(10,width-10), 
+    float x = random(10,width-10),
           y = random(10,height-10);
-    
+
     location = new PVector(x,y);
     velocity = new PVector(0,0);
     acceleration = new PVector(0,0);
     topspeed = 1.5;
     Classe = classe;
     radius = 12;
-    
+
   }
 
   void update() {
 
     if (Classe == 1) {
-      for(Jogador jog: jogadores){
-        if(location.dist(jog.location)<this.radius+jog.radius){
+      for (Jogador jog: jogadores) {
+        if (location.dist(jog.location)<this.radius+jog.radius) {
           jogadores[0].energia = 100;
           pontos.remove(this);
           pontos.add(new Vaga(1));
         }
       }
-      
+
     } else if(Classe == 0) {
       PVector nearest;
-      if(this.location.dist(jogadores[0].location) < this.location.dist(jogadores[1].location)){
+      if(this.location.dist(jogadores[0].location) < this.location.dist(jogadores[1].location)) {
         nearest = jogadores[0].location;
       } else {
         nearest = jogadores[1].location;
       }
       this.acceleration = PVector.sub(nearest,location);
       acceleration.setMag(0.5);
-      
-      for(Jogador jog: jogadores){
-        if ( location.dist(jog.location)< this.radius+jog.radius ){
+
+      for(Jogador jog: jogadores) {
+        if ( location.dist(jog.location)< this.radius+jog.radius ) {
           jog.vida -= 1;
           pontos.remove(this);
         }
       }
-      
+
       this.update_pos();
     }
-    
+
   }
 
   void display() {
     stroke(255);
     strokeWeight(2);
-    if(Classe==0){
+    if(Classe==0) {
       fill(255,0,0);
     }else{
       fill(0,255,0);
     }
-    
+
     ellipse(location.x,location.y,2*radius,2*radius);
   }
 }
