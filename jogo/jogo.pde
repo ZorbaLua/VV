@@ -1,8 +1,8 @@
 
 ArrayList <Vaga> pontos = new ArrayList <Vaga> ();
 Jogador[] jogadores = new Jogador[2];
-float friction = 10;
 
+// --------------------------------------------------------------------------- //
 
 void setup() {
   size(800,600);
@@ -13,8 +13,6 @@ void setup() {
 
   jogadores[0] = new Jogador(0);
   jogadores[1] = new Jogador(1);
-  pontos.add(new Vaga(1));
-  pontos.add(new Vaga(1));
 }
 
 void draw() {
@@ -36,6 +34,17 @@ void draw() {
   drawPlayersStats();
 }
 
+// --------------------------------------------------------------------------- //
+
+void drawHeart(int x, int y) {
+  beginShape();
+  vertex(50+x, 15+y);
+  bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
+  vertex(50+x, 15+y);
+  bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
+  endShape();
+}
+
 void drawPlayersStats() {
   int i = 0;
   for (Jogador jog: jogadores) { // Para todos os jogadores
@@ -51,29 +60,19 @@ void drawPlayersStats() {
   }
 }
 
-void drawHeart(int x, int y) {
-  beginShape();
-    vertex(50+x, 15+y);
-    bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
-    vertex(50+x, 15+y);
-    bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
-  endShape();
-}
-
-// -------------------------------------------------------------------------- //
+// --------------------------------------------------------------------------- //
 
 class Ponto {
-  //cor
   color INK = #008000, OUTLINE = 0;
   float BOLD = 2.0;
 
-  //posicao
   PVector location;
   PVector velocity;
   PVector acceleration;
   float topspeed;
   int radius;
 
+  // - Construtores ------------------ //
 
   Ponto() {
     location = new PVector(width/2,height/2);
@@ -81,6 +80,8 @@ class Ponto {
     acceleration = new PVector(0,0);
     topspeed = 1;
   }
+
+  // - Update ------------------ //
 
   void update_pos() {
     velocity.add(acceleration);
@@ -90,7 +91,7 @@ class Ponto {
 
 }
 
-// -------------------------------------------------------------------------- //
+// --------------------------------------------------------------------------- //
 
 void keyPressed() {
   setMove(keyCode, true);
@@ -104,12 +105,15 @@ class Jogador extends Ponto {
 
   int energia;
   int vida;
-  float rotation;
-  float rotation_vel;
   boolean andar;
 
+  float rotation;
+  float rotation_speed;
+  float rotation_accel;
+
+  // - Construtores ------------------ //
+
   Jogador(int ind) {
-    energia = 50;
 
     if (ind == 0) {
       location = new PVector( width/2-100, height/2);
@@ -119,6 +123,7 @@ class Jogador extends Ponto {
       rotation = 3*PI/2;
     }
 
+    energia = 50;
     velocity = new PVector(0,0);
     acceleration = new PVector(0,0);
     topspeed = 1.5;
@@ -127,14 +132,11 @@ class Jogador extends Ponto {
     topspeed = 2;
   }
 
+  // - Update ------------------------ //
+
   void update() {
 
-    if (rotation > 2*PI) { rotation -= 2*PI; }
-    if (rotation < 2*PI) { rotation += 2*PI; }
-
-    if (energia < 100) { energia += 1; }
-    PVector dir = new PVector(location.x, location.y);
-
+    // - Fora da Janela -------------- //
     if ( location.x < 0 || location.x > width || location.y < 0 || location.y > height ) {
       location.x = width/2; location.y = height/2;
       acceleration.x = 0; acceleration.y = 0;
@@ -142,25 +144,33 @@ class Jogador extends Ponto {
       Jogador.this.vida -= 1;
     }
 
-    if (andar && energia >= 30) {
+    // - Rotacao --------------------- //
+    if (rotation > 2*PI) { rotation -= 2*PI; }
+    if (rotation < 2*PI) { rotation += 2*PI; }
+
+    rotation_speed += rotation_accel;
+    if (rotation_speed >  5) { rotation_speed =  5; }
+    if (rotation_speed < -5) { rotation_speed = -5; }
+
+    rotation += rotation_speed * 0.5 * PI
+
+    // - Movimento ------------------- //
+    PVector dir = new PVector(location.x, location.y);
+    if (energia < 100 &&  frameCount % 4 == 0) { energia += 1; }
+
+    if (andar && energia >= 5) {
       dir.x += sin(rotation)*30;
       dir.y += cos(rotation)*30;
-      energia -= 30;
+      energia -= 2;
     }
 
     this.acceleration = PVector.sub(dir,location);
     acceleration.setMag(0.5);
 
-    /* Isto seria nas Vagas nao no jogador xD querias mata las com o cursor?
-
-    if ( sqrt(pow(location.x - mouseX, 2) + pow(location.y - mouseY, 2)) < 10 ) {
-      pontos.remove(this);
-    }
-    */
-
     this.update_pos();
   }
 
+  // - Display ----------------------- //
   void display() {
     stroke(255);
     strokeWeight(2);
@@ -176,43 +186,43 @@ class Jogador extends Ponto {
 }
 
 void setMove(int key, boolean b) {
-    switch (key) {
-      case 'W':   jogadores[1].andar = b;       break;
-      case UP:    jogadores[0].andar = b;       break;
-      case 'S':   jogadores[1].rotation += 0.3; break;
-      case DOWN:  jogadores[0].rotation += 0.3; break;
-      case 'A':   jogadores[1].rotation += 0.3; break;
-      case LEFT:  jogadores[0].rotation += 0.3; break;
-      case 'D':   jogadores[1].rotation -= 0.3; break;
-      case RIGHT: jogadores[0].rotation -= 0.3; break;
+  switch (key) {
+    case 'W':   jogadores[1].andar = b; break;
+    case UP:    jogadores[0].andar = b; break;
+    case 'A':   if (rotation_accel >= 0) then { jogadores[1].rotation_accel += 0.3; } else { rotation_accel = 0} break;
+    case LEFT:  if (rotation_accel >= 0) then { jogadores[0].rotation_accel += 0.3; } else { rotation_accel = 0} break;
+    case 'D':   if (rotation_accel <= 0) then { jogadores[1].rotation_accel -= 0.3; } else { rotation_accel = 0} break;
+    case RIGHT: if (rotation_accel <= 0) then { jogadores[0].rotation_accel -= 0.3; } else { rotation_accel = 0} break;
 
-      default: break;
-    }
+  //case 'S':   if (rotation_accel <= 0) then { jogadores[1].rotation_accel -= 0.3; } else { rotation_accel = 0} break;
+  //case DOWN:  if (rotation_accel <= 0) then { jogadores[1].rotation_accel -= 0.3; } else { rotation_accel = 0} break;
+
+    default: break;
+  }
 }
 
-// -------------------------------------------------------------------------- //
-
+// --------------------------------------------------------------------------- //
 
 class Vaga extends Ponto {
 
   int Classe; // 0 - vermelhas; 1 - verdes;
 
   Vaga(int classe) {
-    float x = random(10,width-10),
-          y = random(10,height-10);
+  float x = random(10, width  - 10),
+        y = random(10, height - 10);
 
-    location = new PVector(x,y);
-    velocity = new PVector(0,0);
-    acceleration = new PVector(0,0);
-    topspeed = 1.5;
-    Classe = classe;
-    radius = 12;
+  location = new PVector(x,y);
+  velocity = new PVector(0,0);
+  acceleration = new PVector(0,0);
+  topspeed = 1.5;
+  Classe = classe;
+  radius = 12;
 
   }
 
   void update() {
 
-    if (Classe == 1) {
+    if (Classe == 1) { // Vermelha
       for (Jogador jog: jogadores) {
         if (location.dist(jog.location)<this.radius+jog.radius) {
           jogadores[0].energia = 100;
@@ -221,7 +231,7 @@ class Vaga extends Ponto {
         }
       }
 
-    } else if(Classe == 0) {
+    } else if(Classe == 0) { // Verde
       PVector nearest;
       if(this.location.dist(jogadores[0].location) < this.location.dist(jogadores[1].location)) {
         nearest = jogadores[0].location;
@@ -255,3 +265,5 @@ class Vaga extends Ponto {
     ellipse(location.x,location.y,2*radius,2*radius);
   }
 }
+
+// --------------------------------------------------------------------------- //
