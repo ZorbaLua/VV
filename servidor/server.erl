@@ -88,7 +88,7 @@ loop(Map) ->
                     end
             end;
         {online, From} ->
-            From ! {maps:keys(maps:filter(fun(_,V) -> erlang:element(2,V) end, Map)), ?MODULE},
+            From ! {maps:keys(maps:filter(fun(_,{_,V}) -> V end, Map)), ?MODULE},
             loop(Map)
 
     end.
