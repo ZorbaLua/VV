@@ -10,6 +10,7 @@ server(Port) ->
 
 acceptor(LSock, Room) ->
     {ok, Sock} = gen_tcp:accept(LSock),
+    gen_tcp:send(Sock,<<"Entrou~n">>),
     Room ! {new_user, Sock},
     gen_tcp:controlling_process(Sock, Room),
     acceptor(LSock, Room).
