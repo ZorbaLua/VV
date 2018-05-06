@@ -143,14 +143,23 @@ login_manager(Map, GM) ->
             login_manager(Map, GM)
     end.
 
-%Player : {User, Pid}
-%GInfo  : {{x1, y1, a1}, {x2, y2, a2}, [VVm], {VVd, VVd}, Xlim, Ylim}
+%Player   : {User, Pid}
+%GInfo    : {{x1, y1, a1, vel1, acc1, va1, acca1}, {x2, y2, a2, vel2, acc2, va2, acca2}, [VVm], {VVd, VVd}, Xlim, Ylim}
+%VVd, VVm : {x, y}
 game(Player1, Player2, GInfo) ->
     {_, Pid1} = Player1,
     {_, Pid2} = Player2,
+    {Pos1, Pos2, VVm, VVd, Xlim, Ylim} = GInfo,
     receive
         send_now -> 
-            Pid2 ! Pid1 ! {game_info, GInfo}
+            Pid2 ! Pid1 ! {game_info, GInfo},
+            game(Player1, Player2, GInfo);
+        send_enemy ->
+            game(Player1, Player2, 
+                 {Pos1, Pos2, 
+                  [{rand:uniform()*400, rand:uniform()*400} | VVm], 
+                  VVd, Xlim, Ylim});
+
     end.
 
 % Player : {User, Level, Pid}
@@ -167,9 +176,9 @@ game_manager(Players) ->
                                                 [], {{rand:uniform()*400, rand:uniform()*400}, 
                                                      {rand:uniform()*400, rand:uniform()*400}}, 
                                                 400, 400}) end),
-                    {ok, _} = timer:send_interval(20, Game, update),
                     {ok, _} = timer:send_interval(100, Game, send_now),
                     {ok, _} = timer:send_interval(10000, Game, send_enemy),
+                    From ! Pid_H ! {start_game, Game},
                     game_manager(Players -- [H])
             end
     end.
