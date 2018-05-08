@@ -24,8 +24,8 @@ game_manager(Players) ->
                     Game = spawn(fun() -> game({User_H, Pid_H}, {User, From}, 
                                                {{100,200,0}, {300,200,math:pi()}, 
                                                 [], {{rand:uniform()*400, rand:uniform()*400}, 
-                                                     {rand:uniform()*400, rand:uniform()*400}}, 
-                                                400, 400}) end),
+                                                     {rand:uniform()*400, rand:uniform()*400}}
+                                               }, {[],[]} ) end),
                     {ok, _} = timer:send_interval(100, Game, send_now),
                     {ok, _} = timer:send_interval(10000, Game, send_enemy),
                     From ! Pid_H ! {start_game, Game},
@@ -34,23 +34,32 @@ game_manager(Players) ->
     end.
 
 
+
+
 %Player   : {User, Pid}
-%GInfo    : {{x1, y1, a1, vel1, acc1, va1, acca1}, {x2, y2, a2, vel2, acc2, va2, acca2}, [VVm], {VVd, VVd}, Xlim, Ylim}
+%GInfo    : {{x1, y1, a1, vel1, va1}, {x2, y2, a2, vel2, va2}, [VVm], {VVd, VVd} }
 %VVd, VVm : {x, y}
-game(Player1, Player2, GInfo) ->
+%Interval : {[{Act1, Time}], [{Act2, Time}]}
+%Act      : pl | pf | pr | rl | rf | rr
+game(Player1, Player2, GInfo, Interval) ->
     {_, Pid1} = Player1,
     {_, Pid2} = Player2,
-    {Pos1, Pos2, VVm, VVd, Xlim, Ylim} = GInfo,
+    {Pos1, Pos2, VVm, VVd} = GInfo,
+    {_, _} = Interval,
     receive
         send_now -> 
-            New_GInfo = update()
-            Pid2 ! Pid1 ! {game_info, GInfo},
-            game(Player1, Player2, GInfo);
+            New_GInfo = update(GInfo, Interval),
+            Pid2 ! Pid1 ! {game_info, New_GInfo},
+            game(Player1, Player2, New_GInfo, {[], []});
         send_enemy ->
             game(Player1, Player2, 
                  {Pos1, Pos2, 
-                  [{rand:uniform()*400, rand:uniform()*400} | VVm], 
-                  VVd, Xlim, Ylim});
-
+                  [{rand:uniform(), rand:uniform()} | VVm], 
+                  VVd}, Interval)
     end.
+
+update(GInfo, Interval) ->
+    io:fwrite("ole~p~p\n", [GInfo, Interval]).
+
+
 
