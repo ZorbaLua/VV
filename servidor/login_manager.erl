@@ -1,8 +1,7 @@
 -module(login_manager).
--export([start/0, create_account/2, login/2, logout/1]).
+-export([start_loginM/0, create_account/2, login/2, logout/1]).
 
-
-start() ->
+start_loginM() ->
     LM = spawn(fun()-> login_manager(#{}) end),
     register(?MODULE, LM).
 
@@ -25,6 +24,7 @@ logout(User) ->
     receive
         {Ans, ?MODULE} -> Ans
     end.
+
 
 %online() ->
 %    ?MODULE ! {online, self()},
