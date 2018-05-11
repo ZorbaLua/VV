@@ -26,7 +26,7 @@ void draw() {
   text(res, 780, 20);
   textAlign(CENTER);
 
-  if (frameCount % (1*60) == 0) { pls.add(new Player("zorba",700, 50 + pls.size()* 30, 99)); }
+  if (frameCount % (1*60) == 0) { pls.add(new Player("zorba", 650, 50 + pls.size()* 30, 99)); }
 
   for (int i = pls.size()-1; i>=0; i--) {
     Player m = pls.get(i);
@@ -41,6 +41,11 @@ void mousePressed() {
   if      (btn[0].MouseIsOver()) { ; }
   else if (btn[1].MouseIsOver()) { ; }
   else if (btn[2].MouseIsOver()) { surface.setSize(400, 300); }
+
+  for (int i = pls.size()-1; i>=0; i--) {
+    Player m = pls.get(i);
+    if (m.MouseIsOver()) { if(m.invED) { m.invED = false; } else { m.invED = true; } }
+  }
 }
 
   // --------------------------------------------------------------------------- //
@@ -82,7 +87,7 @@ class Player extends Button {
 
   // ----------------------------------------------------------------------- //
   Player(String labelB, float xpos, float ypos, int lev) {
-    super(labelB, xpos, ypos, 20, 20);
+    super(labelB, xpos, ypos, 120, 25);
     lvl = lev; invED = false; invER = false;
   }
 
@@ -91,9 +96,12 @@ class Player extends Button {
     fill(218);
     stroke(141);
     rect(x, y, w, h, 10);
-    textAlign(LEFT, CENTER);
+    textAlign(LEFT);
     fill(0);
-    text(label, x + (w / 2), y + (h / 2));
+    String res = String.format("%s(%s)", label, lvl);
+    text(res, x + 10, y + (h / 2) + 3);
+    if (invED) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-20, y+h/2, 8, 8);
+    if (invER) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-10, y+h/2, 8, 8);
   }
 
   // ----------------------------------------------------------------------- //
