@@ -33,12 +33,14 @@ logout(User) ->
 %        {Err, ?MODULE} -> Err
 %    end.
 
+% Map : #{User => {Pass, On, Level, Exp, Pid}}
 login_manager(Map) ->
     receive
         {create_account, User, Pass, From} ->
             case maps:find(User, Map) of
                 error ->
                     From ! {ok, 1, 0, ?MODULE},
+                    From ! bem_vindo, 
                     login_manager(maps:put(User, {Pass, true, 1, 0, From}, Map));
                 _     ->
                     From ! {user_exists, ?MODULE},

@@ -8,7 +8,7 @@ start_gameM() ->
 
 play(User, Level) ->
     ?MODULE ! {play, User, Level, self()},
-    receive 
+    receive
         {Gamepid, ?MODULE} -> Gamepid
     end.
 
@@ -22,8 +22,8 @@ game_manager(Players) ->
                     game_manager(Players ++ [{User, Level, From}]);
                 [H | _] ->
                     {User_H, _, Pid_H} = H,
-                    start({User_H, Pid_H}, {User, From}),
-                    From ! Pid_H ! start_game,
+                    Gamepid = start({User_H, Pid_H}, {User, From}),
+                    From ! Pid_H ! {Gamepid, ?MODULE},
                     game_manager(Players -- [H])
             end
     end.

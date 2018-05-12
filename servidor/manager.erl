@@ -1,7 +1,7 @@
 -module(manager).
 -export([server/1]).
 
-%-import(game, [pleft/1, pfront/1, pright/1, rleft/1, rfront/1, rright/1]).
+-import(game, [pleft/1, pfront/1, pright/1, rleft/1, rfront/1, rright/1]).
 -import(game_manager, [start_gameM/0, play/2]).
 -import(login_manager, [start_loginM/0, create_account/2, login/2, logout/1]).
 
@@ -35,6 +35,7 @@ start_player(Sock) ->
 
 % fazer no player
 create_login(Sock, Mod) ->
+    gen_tcp:send(Sock, io_lib:format(<<"Pid: ~p~n">>, [self()])),
     gen_tcp:send(Sock, <<"User Name:\n">>),
     User = receive
                {tcp, _, Ans_User}->
@@ -52,15 +53,15 @@ create_login(Sock, Mod) ->
     case Msg of
         {ok, Level, Exp} -> 
             gen_tcp:send(Sock, <<"success\n\\help for command list\n">>),
-            player(Sock, {User, Pass, Level, Exp});
+            player(Sock, {User, Pass, Level, Exp}, none);
         Err            ->
-            gen_tcp:send(Sock, io_lib:format(<<"~p\n">>, [Err])),
+            gen_tcp:send(Sock, io_lib:format(<<"~p~n">>, [Err])),
             create_login(Sock, Mod)
     end.
 
 % Processos Principais %
 % Player : {User, Pass, Level, Exp}
-player(Sock, Player) ->
+player(Sock, Player, GPid) ->
     {User, Pass, Level, Exp} = Player,
     receive
         {tcp, _, Msg} -> 
@@ -68,19 +69,30 @@ player(Sock, Player) ->
                 [<<"\\help">>] -> 
                     gen_tcp:send(Sock, [<<"\\help - command list\n">>,
                                         <<"\\info - your info\n">>]),
-                    player(Sock, Player);
+                    player(Sock, Player, GPid);
                 [<<"\\info">>] ->
                     gen_tcp:send(Sock, [<<"Username: ">>, User, <<"\n">>,
                                         <<"Password: ">>, Pass, <<"\n">>,
                                         io_lib:format(<<"Level: ~p~n">>,   [Level]),
                                         io_lib:format(<<"Exp: ~p~n">>,       [Exp])]),
-                    player(Sock, Player);
+                    player(Sock, Player, GPid);
                 [<<"\\play">>] ->
-                    play(User, Level),
-                    player(Sock, Player);
+                    New_GPid = play(User, Level),
+                    player(Sock, Player, New_GPid);
+                [<<"l">>] ->
+                    pleft(GPid),
+                    rleft(GPid),
+                    player(Sock, Player, GPid);
+                [<<"f">>] ->
+                    pfront(GPid),
+                    rfront(GPid),
+                    player(Sock, Player, GPid);
+                [<<"r">>] ->
+                    pright(GPid),
+                    rright(GPid),
+                    player(Sock, Player, GPid);
                 _ ->  
-                    ?MODULE ! {send, Msg, User},
-                    player(Sock, Player)
+                    player(Sock, Player, GPid)
             end;
         {tcp_closed, _} ->
             logout(User);
@@ -88,18 +100,16 @@ player(Sock, Player) ->
             io:format("tcp error~n", []),
             logout(User);
 
-        {online, List, ?MODULE} ->
+        {online, List, _} ->
             gen_tcp:send(Sock, lists:join(<<"\n">>, List)),
             gen_tcp:send(Sock, <<"\n">>),
-            player(Sock, Player);
-        {send, Msg, User, ?MODULE} ->
-            gen_tcp:send(Sock, [User, <<" said: ">>, Msg]),
-            player(Sock, Player);
-        {Err, ?MODULE} ->
-            gen_tcp:send(Sock, io_lib:format("~p\n", [Err])),
-            player(Sock, Player);
+            player(Sock, Player, GPid);
         {game_info, GInfo} ->
-            gen_tcp:send(Sock, io_lib:format("~p\n", [GInfo])),
-            player(Sock, Player)
+            gen_tcp:send(Sock, io_lib:format("~p~n", [GInfo])),
+            player(Sock, Player, GPid);
+        Err ->
+            gen_tcp:send(Sock, io_lib:format("~p~n", [Err])),
+            player(Sock, Player, GPid)
+
     end.
 
