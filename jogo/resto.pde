@@ -1,64 +1,64 @@
+class Button {
+    String label;
+    float x, y, w, h;
 
-ArrayList <Vaga> pontos = new ArrayList <Vaga> ();
-Jogador[] jogadores = new Jogador[2];
-
-void setup() {
-  size(800,600);
-  smooth(4);
-  frameRate(60);
-  textAlign(CENTER, CENTER);
-  ellipseMode(CENTER);
-
-  jogadores[0] = new Jogador(0);
-  jogadores[1] = new Jogador(1);
-  pontos.add(new Vaga(1));
-  pontos.add(new Vaga(1));
-}
-
-void draw() {
-
-  background(255);
-  if (frameCount % (3*60) == 0) { pontos.add(new Vaga(0)); }
-
-  for (int i = pontos.size()-1; i>=0; i--) {
-    Vaga m = pontos.get(i);
-    m.update();
-    m.display();
+    // ----------------------------------------------------------------------- //
+  Button(String labelB, float xpos, float ypos, float widthB, float heightB) {
+    label = labelB;
+    x = xpos;
+    y = ypos;
+    w = widthB;
+    h = heightB;
   }
 
-  for (Jogador jog: jogadores) {
-    jog.update();
-    jog.display();
+  // ----------------------------------------------------------------------- //
+  void Draw() {
+    fill(218);
+    stroke(141);
+    rect(x, y, w, h, 10);
+    textAlign(CENTER, CENTER);
+    fill(0);
+    text(label, x + (w/2), y + (h/2));
   }
 
-  drawPlayersStats();
-}
-
-void drawPlayersStats() {
-  int i = 0;
-  for (Jogador jog: jogadores) { // Para todos os jogadores
-    for (int ii = 0; ii<jog.vida; ii++) { // Para todas as vidas
-      fill(255,0,0);
-      drawHeart(0+50*ii,0+50*i);
-    }
-    for (int ii = 0; ii<jog.energia; ii++) { // Para todas as vidas
-      fill(0);
-      ellipse(ii*3+200,25+50*i,5,5);
-    }
-    i++;
+  // ----------------------------------------------------------------------- //
+  boolean MouseIsOver() {
+    if (mouseX > x && mouseX < (x + w) && mouseY > y && mouseY < (y + h)) { return true; }
+    else { return false; }
   }
 }
 
-void drawHeart(int x, int y) {
-  beginShape();
-    vertex(50+x, 15+y);
-    bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
-    vertex(50+x, 15+y);
-    bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
-  endShape();
-}
+// --------------------------------------------------------------------------- //
 
-// -------------------------------------------------------------------------- //
+class Player extends Button {
+    int lvl;
+    Boolean invED, invER;
+
+  // ----------------------------------------------------------------------- //
+  Player(String labelB, float xpos, float ypos, int lev) {
+    super(labelB, xpos, ypos, 120, 25);
+    lvl = lev; invED = false; invER = false;
+  }
+
+  // ----------------------------------------------------------------------- //
+  void Draw() {
+    fill(218);
+    stroke(141);
+    rect(x, y, w, h, 10);
+    textAlign(LEFT);
+    fill(0);
+    String res = String.format("%s(%s)", label, lvl);
+    text(res, x + 10, y + (h / 2) + 3);
+    if (invED) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-20, y+h/2, 8, 8);
+    if (invER) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-10, y+h/2, 8, 8);
+  }
+
+  // ----------------------------------------------------------------------- //
+  boolean MouseIsOver() {
+    if (mouseX > x && mouseX < (x + w) && mouseY > y && mouseY < (y + h)) { return true; }
+    else { return false; }
+  }
+}
 
 class Ponto {
   //cor
@@ -85,6 +85,30 @@ class Ponto {
     location.add(velocity);
   }
 
+}
+
+void drawPlayersStats() {
+  int i = 0;
+  for (Jogador jog: jogadores) { // Para todos os jogadores
+    for (int ii = 0; ii<jog.vida; ii++) { // Para todas as vidas
+      fill(255,0,0);
+      drawHeart(0+50*ii,0+50*i);
+    }
+    for (int ii = 0; ii<jog.energia; ii++) { // Para todas as vidas
+      fill(0);
+      ellipse(ii*3+200,25+50*i,5,5);
+    }
+    i++;
+  }
+}
+
+void drawHeart(int x, int y) {
+  beginShape();
+    vertex(50+x, 15+y);
+    bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
+    vertex(50+x, 15+y);
+    bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
+  endShape();
 }
 
 // -------------------------------------------------------------------------- //
