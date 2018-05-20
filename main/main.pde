@@ -92,7 +92,7 @@ void endProcura() {
 void mousePressed() {
   if      (btn[0].MouseIsOver()) { if(procura) {endProcura();} else {startProcura();} }
   else if (btn[1].MouseIsOver()) { startGame(); menu = false; }
-  else if (btn[2].MouseIsOver()) { surface.setSize(400, 300); }
+  else if (btn[2].MouseIsOver()) { scale(0.5, 0.5); surface.setSize(400, 300); }
   else if (btn[3].MouseIsOver()) { exit(); }
 
   for (int i = pls.size()-1; i >= 0; i--) {
