@@ -1,8 +1,17 @@
 
+import static javax.swing.JOptionPane.*;
+import javax.swing.JPasswordField;
+
+final StringDict accounts = new StringDict(
+  new String[] { "adriano", "artur", "vasco" }, new String[] {"z", "z", "z"});
+
+final JPasswordField pwd = new JPasswordField(); { println(accounts); }
+
+
 Button[] btn = new Button[4];
 ArrayList <Player> pls = new ArrayList <Player> ();
-int rJX = 800, rJY = 600;
-Boolean menu = true, procura = false, started = true;
+int rJX = 800, rJY = 600, menu = 0;
+Boolean procura = false, started = true;
 
 ArrayList <Vaga> pontos = new ArrayList <Vaga> ();
 Jogador[] jogadores = new Jogador[2];
@@ -34,8 +43,18 @@ void endGame() {
   for (int i = pontos.size()-1; i>=0; i--) { Vaga m = pontos.get(i); pontos.remove(m); }
 }
 
+void drawLogin(){
+  String user = askUser();
+  if (user == null) confirmQuit(); else if (!"".equals(user))  askPass(user);
+}
+
+
 void draw() {
-  if (menu) { drawMenu(); } else { drawGame(); }
+  switch (menu) {
+            case 0:  drawLogin(); break;
+            case 1:  drawMenu(); break;
+            case 2:  drawGame(); break;
+  }
 }
 
 void drawGameCoutdown() {
@@ -45,7 +64,7 @@ void drawGameCoutdown() {
 void drawGame() {
   background(255);
 
-  for (Jogador jog: jogadores) { if (jog.vida == 0) { endGame(); menu = true; } }
+  for (Jogador jog: jogadores) { if (jog.vida == 0) { endGame(); menu = 1; } }
   if (frameCount % (3*60) == 0) { pontos.add(new Vaga(0)); }
 
   for (int i = pontos.size()-1; i>=0; i--) { Vaga m = pontos.get(i); m.update(); m.display(); }
@@ -91,7 +110,7 @@ void endProcura() {
 
 void mousePressed() {
   if      (btn[0].MouseIsOver()) { if(procura) {endProcura();} else {startProcura();} }
-  else if (btn[1].MouseIsOver()) { startGame(); menu = false; }
+  else if (btn[1].MouseIsOver()) { startGame(); menu = 2; }
   else if (btn[2].MouseIsOver()) { scale(0.5, 0.5); surface.setSize(400, 300); }
   else if (btn[3].MouseIsOver()) { exit(); }
 
