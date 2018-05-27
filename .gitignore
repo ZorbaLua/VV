@@ -1,7 +1,7 @@
 
-.DS_Store
+*.DS_Store
 
-.s[wao]p
+*.s[wao]p
 
-.class
-.jar
+*.class
+*.jar
