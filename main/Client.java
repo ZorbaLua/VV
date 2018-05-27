@@ -1,10 +1,14 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 
 class Receiver implements Runnable{
     BufferedReader in; 
-    ArrayBlockingQueue buf;
+    ArrayBlockingQueue<GameState> buf;
 
-	public Receiver (Socket s, ArrayBlockingQueue buffer){
+	public Receiver (Socket s, ArrayBlockingQueue<GameState> buffer){
         this.buf = buffer;
         try{
             this.in = new BufferedReader(new InputStreamReader( s.getInputStream()));
@@ -16,8 +20,8 @@ class Receiver implements Runnable{
 	public void run(){
         while(true){
             try{
-                String gameStateString = in.readLine();
-                buf.put(new State(gameStateString));
+                String gameGameStateString = in.readLine();
+                buf.put(new GameState(gameGameStateString));
             }catch(Exception e){
                 e.printStackTrace();
                 System.exit(0);
@@ -28,7 +32,7 @@ class Receiver implements Runnable{
 
 class Sender implements Runnable{
     PrintWriter out;
-    ArrayBlockingQueue buf;
+    ArrayBlockingQueue<GameState> buf;
 
 	public Sender(Socket s, ArrayBlockingQueue<GameState> buffer){
         try{
@@ -42,8 +46,9 @@ class Sender implements Runnable{
 	public void run(){
         while(true){
             try{
-                State st;
-                while(st = buf.take()){
+                GameState st;
+                while(true){
+                    st = buf.take();
                     out.println(st.toString()); 
                 }
             }catch(Exception e){
@@ -55,9 +60,9 @@ class Sender implements Runnable{
 }
 
 public class Client {
-    Client(String ip_address, int port, ArrayBlockingQueue bufferRec, ArrayBlockingQueue bufferSend){
+    Client(String ipAddress, int port, ArrayBlockingQueue<GameState> bufferRec, ArrayBlockingQueue<GameState> bufferSend){
         try{
-            Socket s = new Socket(host, port);
+            Socket s = new Socket(ipAddress, port);
             new Thread(new Receiver(s, bufferRec)).start();
             new Thread(new Sender(s, bufferSend)).start();
         }catch(Exception e){
