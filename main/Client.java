@@ -1,10 +1,11 @@
-import java.io.*;
-import java.net.*;
-import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
 
-class Receiver extends Thread {
-	BufferedReader in; 
-	public Receiver (Socket s){
+class Receiver implements Runnable{
+    BufferedReader in; 
+    ArrayBlockingQueue buf;
+
+	public Receiver (Socket s, ArrayBlockingQueue buffer){
+        this.buf = buffer;
         try{
             this.in = new BufferedReader(new InputStreamReader( s.getInputStream()));
         }catch(Exception e){
@@ -15,9 +16,8 @@ class Receiver extends Thread {
 	public void run(){
         while(true){
             try{
-                String res = in.readLine();
-                System.out.println(res);
-                System.out.flush();
+                String gameStateString = in.readLine();
+                buf.put(new State(gameStateString));
             }catch(Exception e){
                 e.printStackTrace();
                 System.exit(0);
@@ -26,24 +26,25 @@ class Receiver extends Thread {
 	}
 }
 
-class Sender extends Thread {
+class Sender implements Runnable{
     PrintWriter out;
-    Scanner sc;
-	public Sender (Socket s){
+    ArrayBlockingQueue buf;
+
+	public Sender(Socket s, ArrayBlockingQueue<GameState> buffer){
         try{
-            this.out = new PrintWriter(s.getOutputStream());
+            this.out = new PrintWriter(s.getOutputStream(), true);
         }catch(Exception e){
             e.printStackTrace();
             System.exit(0);
         }
-        this.sc = new Scanner(System.in);
 	}
+
 	public void run(){
         while(true){
             try{
-                while(sc.hasNextLine()){
-                    out.println(sc.nextLine());
-                    out.flush();
+                State st;
+                while(st = buf.take()){
+                    out.println(st.toString()); 
                 }
             }catch(Exception e){
                 e.printStackTrace();
@@ -54,19 +55,11 @@ class Sender extends Thread {
 }
 
 public class Client {
-    public static void main(String[] args) {
+    Client(String ip_address, int port, ArrayBlockingQueue bufferRec, ArrayBlockingQueue bufferSend){
         try{
-            if(args.length<2)
-                System.exit(1);
-            String host = args[0];
-            int port = Integer.parseInt(args[1]);
             Socket s = new Socket(host, port);
-            Receiver re = new Receiver(s);
-            Sender se = new Sender(s);
-            se.start();
-            re.start();
-            se.join();
-            re.join();
+            new Thread(new Receiver(s, bufferRec)).start();
+            new Thread(new Sender(s, bufferSend)).start();
         }catch(Exception e){
             e.printStackTrace();
             System.exit(0);
