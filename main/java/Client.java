@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 
+
 class Receiver implements Runnable{
     BufferedReader in; 
     ArrayBlockingQueue<GameState> buf;
@@ -60,11 +61,17 @@ class Sender implements Runnable{
 }
 
 public class Client {
-    Client(String ipAddress, int port, ArrayBlockingQueue<GameState> bufferRec, ArrayBlockingQueue<GameState> bufferSend){
+    private final int BUFFCAP = 20;
+    ArrayBlockingQueue<GameState> sender;
+    ArrayBlockingQueue<GameState> receiver;
+
+    Client(String ipAddress, int port){
+        this.sender = new ArrayBlockingQueue<GameState>(BUFFCAP);
+        this.receiver = new ArrayBlockingQueue<GameState>(BUFFCAP);
         try{
             Socket s = new Socket(ipAddress, port);
-            new Thread(new Receiver(s, bufferRec)).start();
-            new Thread(new Sender(s, bufferSend)).start();
+            new Thread(new Receiver(s, receiver)).start();
+            new Thread(new Sender(s, sender)).start();
         }catch(Exception e){
             e.printStackTrace();
             System.exit(0);
