@@ -59,6 +59,22 @@ create_login(Sock, Mod) ->
             create_login(Sock, Mod)
     end.
 
+update_level(Player, Result) ->
+    {User, Pass, Level, Exp} = Player,
+    case Result of
+        win  -> 
+            Exp = Exp+1,
+            if
+                Level == Exp ->
+                    Level = Level+1,
+                    Exp = 0
+            end;
+        _    -> 
+            Level = Level+1
+    end,
+    {User, Pass, Level, Exp}.
+
+
 % Processos Principais %
 % Player : {User, Pass, Level, Exp}
 player(Sock, Player, GPid) ->
@@ -107,9 +123,11 @@ player(Sock, Player, GPid) ->
         {game_info, GInfo} ->
             gen_tcp:send(Sock, io_lib:format("~p~n", [GInfo])),
             player(Sock, Player, GPid);
+        {game, Result} ->
+            gen_tcp:send(Sock, io_lib:format("~p~n", [Result])),
+            player(Sock, update_level(Player, Result), GPid);
         Err ->
             gen_tcp:send(Sock, io_lib:format("~p~n", [Err])),
             player(Sock, Player, GPid)
-
     end.
 

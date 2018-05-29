@@ -26,6 +26,10 @@ rleft(Game)  -> Game ! {release, left , self()}.
 rfront(Game) -> Game ! {release, front, self()}.
 rright(Game) -> Game ! {release, right, self()}.
 
+in_game(Pos) ->
+    {X1,Y1} = Pos,
+    (X1>=0) and (X1<1) and (Y1>=0) and (Y1<1).
+
 %Raio do jogador = ?
 %Raio das vagas  = ?
 %
@@ -66,8 +70,22 @@ game(Player1, Player2, GInfo, Interval) ->
 
         send_now -> 
             {New_GInfo, New_Interval} = update(GInfo, Interval),
-            Pid2 ! Pid1 ! {game_info, New_GInfo},
-            game(Player1, Player2, New_GInfo, New_Interval);
+            {Pos1, _} = PlState1,
+            {Pos2, _} = PlState2,
+            case {in_game(Pos1), in_game(Pos2)} of
+                {true, true} -> 
+                    Pid2 ! Pid1 ! {game_info, New_GInfo},
+                    game(Player1, Player2, New_GInfo, New_Interval);
+                {true, false} -> 
+                    Pid2 ! lose,
+                    Pid1 ! win;
+                {false, true} -> 
+                    Pid2 ! win,
+                    Pid1 ! lose;
+                {false, false} ->
+                    Pid2 ! draw,
+                    Pid1 ! draw
+            end;
         send_enemy ->
             game(Player1, Player2, 
                  {PlState1, PlState2, 
