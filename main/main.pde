@@ -70,6 +70,7 @@ boolean login() {
 boolean singin() {
     String user = showInputDialog("Please enter user:");
     String pass = showInputDialog("Please enter password:");
+    if(user==null || pass==null) return false;
     return client.singin(user, pass);
 }
 

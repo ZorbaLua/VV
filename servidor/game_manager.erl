@@ -1,30 +1,45 @@
 -module(game_manager).
--export([start_gameM/0, play/2]).
--import(game, [start/2]).
+-export([start/0, enroll/1]).
 
-start_gameM() ->
-    GM = spawn(fun()-> game_manager([]) end),
-    register(?MODULE, GM).
 
-play(User, Level) ->
-    ?MODULE ! {play, User, Level, self()},
-    receive
-        {Gamepid, ?MODULE} -> Gamepid
+%--------------------------------------------------
+% API
+
+start() ->
+    Pid = spawn(fun()-> loop(#{}) end),
+    register(?MODULE, Pid).
+
+enroll(PlayerInfo) ->
+    {_User, _Pass, Level, _Exp} = PlayerInfo,
+    ?MODULE ! {enroll, Level, self()},
+    receive {GamePid, ?MODULE} -> GamePid
     end.
 
+%--------------------------------------------------
 
-% Player : {User, Level, Pid}
-game_manager(Players) ->
+loop(MapLevel) ->
     receive
-        {play, User, Level, From} -> 
-            case lists:filter(fun({_, L, _}) -> (L==Level) or (L==Level+1) or (L==Level-1) end, Players) of
-                [] -> 
-                    game_manager(Players ++ [{User, Level, From}]);
-                [H | _] ->
-                    {User_H, _, Pid_H} = H,
-                    Gamepid = start({User_H, Pid_H}, {User, From}),
-                    From ! Pid_H ! {Gamepid, ?MODULE},
-                    game_manager(Players -- [H])
-            end
+        {enroll, Level, From} -> 
+            Pid = findGame(MapLevel, Level, From),
+            From ! {Pid, self()}
+        %{end, From} ->
     end.
 
+%--------------------------------------------------
+
+
+findGame(MapLevel, Level, Client) -> findGame(MapLevel, Level-1, 3, Client).
+findGame(MapLevel, Level, I, Client) when I==0 ->
+    Pid = game:start(self()),
+    game:addClient(Client),
+    loop(MapLevel#{Level+1 => Pid});
+
+findGame(MapLevel, Level, I, Client) when I>0 -> 
+    case maps:find(Level, MapLevel) of
+        error -> findGame(MapLevel, Level, I-1);
+        % existe jogo disponivel acrescenta cliente ao jogo
+        {ok, Game} -> 
+            ok = game:addClient(Game, Client),
+            Client ! {Game, self()},
+            loop(MapLevel)
+    end.

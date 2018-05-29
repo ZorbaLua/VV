@@ -87,16 +87,26 @@ public class Client {
 
     public boolean login(String user, String pass){
         boolean ret = false;
-        out.println("$login " + user + " "+ pass);
-        try{ ret = in.readLine().equals("ok"); }
+        out.println("login " + user + " "+ pass);
+        try{ 
+            System.out.println("login " + user + " " + pass);
+            String line = in.readLine();
+            System.out.println(line);
+            ret = line.equals("ok"); 
+        }
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
 
     public boolean singin(String user, String pass){
         boolean ret = false;
-        out.println("$register " + user + " " + pass);
-        try{ ret = in.readLine().equals("ok"); }
+        out.println("signin " + user + " " + pass);
+        try{ 
+            System.out.println("singin " + user + " " + pass);
+            String line = in.readLine();
+            System.out.println(line);
+            ret = line.equals("ok"); 
+        }
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
@@ -104,8 +114,11 @@ public class Client {
     public boolean play(){
         boolean ret = false;
         try{
-            out.println("$play");
-            ret = in.readLine().equals("ok");
+            out.println("play");
+            System.out.println("play");
+            String line = in.readLine();
+            System.out.println(line);
+            ret = line.equals("ok"); 
             if(ret){
                 this.receiver = new Receiver();
                 new Thread(this.receiver).start();
@@ -113,7 +126,7 @@ public class Client {
                 new Thread(this.sender).start();
             }
         }
-        catch(Exception e){ e.printStackTrace(); System.exit(0); }
+        catch(Exception e){ System.out.println("Estou aqui so para  ti"); e.printStackTrace(); System.exit(0); }
         return ret;
     }
 

@@ -1,0 +1,10 @@
+c(champion).
+c(game).
+c(game_manager).
+c(login_manager).
+c(server).
+server:start(12345).
+
+
+
+

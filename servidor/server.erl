@@ -1,94 +1,151 @@
 -module(server).
--export([start/0, create_account/2, close_account/2, login/2, logout/1, online/0]).
+-export([start/1]).
+
+%--------------------------------------------------
+% API
+start(Port) ->
+    game_manager:start(),
+    login_manager:start(),
+    {ok, LSock} = gen_tcp:listen(Port, [binary, {packet, line}]),
+    acceptor(LSock).
+
+%--------------------------------------------------
+
+acceptor(LSock) ->
+    {ok, Sock} = gen_tcp:accept(LSock),
+    Client = spawn(fun() -> clientLoop_LoginManager(Sock) end),
+    ok = gen_tcp:controlling_process(Sock, Client),
+    acceptor(LSock).
 
 
-start() ->
-    Pid = spawn(fun() -> loop(#{}) end),
-    register(?MODULE, Pid). %MODULE? e tipo um define para o nome do modulo
 
 
-create_account(User, Pass) -> 
-    ?MODULE ! {create_account, User, Pass, self()},
-    receive {Res, ?MODULE} -> Res end.
 
-close_account(User, Pass) ->
-    ?MODULE ! {close_account, User, Pass, self()},
-    receive {Res, ?MODULE} -> Res end.
-
-login(User, Pass) ->
-    ?MODULE ! {login, User, Pass, self()},
-    receive {Res, ?MODULE} -> Res end.
-
-logout(User) ->
-    ?MODULE ! {logout, User, self()},
-    receive {Res, ?MODULE} -> Res end.
-
-online() ->
-    ?MODULE ! {online, self()},
-    receive {Res, ?MODULE} -> Res end.
-
-loop(Map) ->
+%--------------------------------------------------
+% comunicacao cliente com login manager
+clientLoop_LoginManager(Sock) ->
     receive
-        {create_account, User, Pass, From} ->
-            case maps:find(User, Map) of
-                error ->
-                    From ! {ok, ?MODULE},
-                    loop(maps:put(User, {Pass, false}, Map));
-                _     ->
-                    From ! {user_exists, ?MODULE},
-                    loop(Map)
-            end;
-
-        {close_account, User, Pass, From} ->
-            case maps:find(User, Map) of
-                error ->
-                    From ! {invalid_user, ?MODULE},
-                    loop(Map);
-                {ok, {Value, _}} ->
-                    if
-                        Value == Pass ->
-                            From ! {ok, ?MODULE},
-                            loop(maps:remove(User, Map));
-                        true ->
-                            From ! {invalid_pass, ?MODULE},
-                            loop(Map)
-                    end
-            end;
-        {login, User, Pass, From} ->
-            case maps:find(User, Map) of
-                error ->
-                    From ! {invalid_user, ?MODULE},
-                    loop(Map);
-                {ok, {Value, On}} ->
-                    if
-                        On ->
-                            From ! {already_On, ?MODULE},
-                            loop(Map);
-                        Value == Pass ->
-                            From ! {ok, ?MODULE},
-                            loop(maps:update(User, {Pass, true},  Map));
-                        true ->
-                            From ! {invalid_pass, ?MODULE},
-                            loop(Map)
-                    end
-            end;
-        {logout, User, From} ->
-            case maps:find(User, Map) of
-                error ->
-                    From ! {invalid_user, ?MODULE},
-                    loop(Map);
-                {ok, {Value, On}} ->
-                    if
-                        not On ->
-                            From ! {already_Off, ?MODULE},
-                            loop(Map);
-                        true ->
-                            From ! {ok, ?MODULE},
-                            loop(maps:update(User, {Value, false},  Map))
-                    end
-            end;
-        {online, From} ->
-            From ! {maps:keys(maps:filter(fun(_,{_,V}) -> V end, Map)), ?MODULE},
-            loop(Map)
-
+        {tcp, _, Request}->
+            [Comand | Args] = string:split(Request, " ", all),
+            eval_lm(Sock, Comand, Args);
+        %receber erro de tcp
+        {tcp_closed, _} -> free;
+        {tcp_error,  _} -> free;
+        %receber qualquer coisa 
+        _ -> clientLoop_LoginManager(Sock)
     end.
+
+eval_lm(Sock, Comand, Args) ->
+    case Comand of
+        <<"login">> -> 
+            [User | [Pass | [] ]] = Args,
+            case login_manager:login(User, Pass) of 
+                % login bem sucedido processo avanca proximo estado
+                {ok, PlayerInfo} -> 
+                    io:fwrite("estou aqui"),
+                    ok = gen_tcp:send(Sock, "ok\n"),
+                    clientLoop_GameManager(Sock, PlayerInfo);
+                % login mal sucedido processo fica no mesmo estado
+                _ ->
+                    ok = gen_tcp:send(Sock, "error\n"),
+                    clientLoop_LoginManager(Sock)
+            end;
+
+        <<"signin">> ->
+            [User | [Pass | [] ]] = Args,
+            case login_manager:signin(User, Pass) of 
+                % registo bem sucedido
+                ok ->
+                    ok = gen_tcp:send(Sock, "ok\n"),
+                    clientLoop_LoginManager(Sock);
+                % registo mal sucedido
+                _ -> 
+                    ok = gen_tcp:send(Sock, "error\n"),
+                    clientLoop_LoginManager(Sock)
+            end
+    end.
+%--------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+%--------------------------------------------------
+% comunicacao cliente com login manager
+clientLoop_GameManager(Sock, PlayerInfo) ->
+    {User, _Pass, _Level, _Exp} = PlayerInfo,
+    receive
+        {tcp, _, Request} -> 
+            eval_gm(Request, Sock, PlayerInfo);
+        %receber erro de tcp
+        {tcp_closed, _} -> login_manager:logout(User);
+        {tcp_error,  _} -> login_manager:logout(User);
+        %receber qualquer coisa 
+        _ -> clientLoop_GameManager(Sock, PlayerInfo)
+    end.
+
+
+eval_gm(Comand, Sock, PlayerInfo) ->
+    case Comand of
+        % receber o pid do jogo, e espere pela mensagem start do game 
+        <<"play">> ->
+            Game = game_manager:enroll(PlayerInfo),
+            clientLoop_Game(Sock, PlayerInfo, Game);
+
+        % receber pedido de informacoes
+        <<"info">> ->
+            ok = gen_tcp:send(Sock, PlayerInfo),
+            clientLoop_GameManager(Sock, PlayerInfo);
+
+        % receber qualquer coisa
+        _ -> clientLoop_GameManager(Sock, PlayerInfo)
+    end.
+%--------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+%--------------------------------------------------
+% comunicacao cliente com login manager
+clientLoop_Game(Sock, PlayerInfo, Game) ->
+    {User, _, _, _} = PlayerInfo,
+    receive
+        % receber mensaegem do cliente
+        {tcp, _ , Msg} ->
+            Game ! {Msg, self()},
+            clientLoop_Game(Sock, PlayerInfo, Game);
+
+        % receber mansagem de start do jogo
+        {start, Game} ->
+            ok = gen_tcp:send(Sock, "ok\n"),
+            clientLoop_Game(Sock, PlayerInfo, Game);
+                    
+        % receber estado do jogo
+        {state, State, Game} -> 
+            ok = gen_tcp:send(Sock, State),
+            clientLoop_Game(Sock, PlayerInfo, Game);
+
+        % receber fim de jogo 
+        {finish, Game} -> 
+            ok = gen_tcp:send(Sock, "end\n"),
+            clientLoop_GameManager(Sock, PlayerInfo);
+
+        %receber erro de tcp
+        {tcp_closed, _} -> login_manager:logout(User);
+        {tcp_error,  _} -> login_manager:logout(User);
+        %receber qualquer coisa 
+        _ -> clientLoop_Game(Sock, PlayerInfo, Game)
+    end.
+%--------------------------------------------------
+    
