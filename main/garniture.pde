@@ -1,3 +1,29 @@
+
+class Ranks {
+    String label;
+    float x, y;
+    Player a, b, c;
+
+
+    // ----------------------------------------------------------------------- //
+  Ranks(String labelB, float xpos, float ypos) {
+    label = labelB;
+    x = xpos;
+    y = ypos;
+  }
+
+  // ----------------------------------------------------------------------- //
+  void display() {
+    fill(218);
+    stroke(141);
+    rect(x, y, 10, 10, 10);
+    textAlign(CENTER, CENTER);
+    fill(0);
+    text(label, x + (10/2), y + (10/2));
+  }
+
+}
+
 class Button {
     String label;
     float x, y, w, h;
@@ -31,13 +57,13 @@ class Button {
 // --------------------------------------------------------------------------- //
 
 class Player extends Button {
-    int lvl;
+    int lvl, vic;
     Boolean invED, invER;
 
   // ----------------------------------------------------------------------- //
-  Player(String labelB, float xpos, float ypos, int lev) {
+  Player(String labelB, float xpos, float ypos, int lev, int vict) {
     super(labelB, xpos, ypos, 120, 25);
-    lvl = lev; invED = false; invER = false;
+    lvl = lev; vic=vict; invED = false; invER = false;
   }
 
   // ----------------------------------------------------------------------- //
@@ -47,7 +73,7 @@ class Player extends Button {
     rect(x, y, w, h, 10);
     textAlign(LEFT);
     fill(0);
-    String res = String.format("%s(%s)", label, lvl);
+    String res = String.format("%s(%s) V:%s", label, lvl, vic);
     text(res, x + 10, y + (h / 2) + 3);
     if (invED) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-20, y+h/2, 8, 8);
     if (invER) { fill(50,205,50); } else { fill(220,20,60); } ellipse(x+w-10, y+h/2, 8, 8);
@@ -97,6 +123,3 @@ void drawHeart(int x, int y) {
 }
 
 // -------------------------------------------------------------------------- //
-
-
-
