@@ -81,6 +81,10 @@ boolean singin() {
     return client.singin(user, pass);
 }
 
+void signout(){
+    client.singout();
+}
+
 boolean play() {
     return client.play();
 }

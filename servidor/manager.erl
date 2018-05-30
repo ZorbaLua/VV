@@ -20,8 +20,6 @@ acceptor(LSock) ->
 
 % create_account or Login? %
 start_player(Sock) ->
-    gen_tcp:send(Sock, <<"Register? (send 1)\n">>),
-    gen_tcp:send(Sock, <<"Login?    (send 2)\n">>),
     receive
         {tcp, _, Ans}->
             case Ans of
@@ -35,13 +33,10 @@ start_player(Sock) ->
 
 % fazer no player
 create_login(Sock, Mod) ->
-    gen_tcp:send(Sock, io_lib:format(<<"Pid: ~p~n">>, [self()])),
-    gen_tcp:send(Sock, <<"User Name:\n">>),
     User = receive
                {tcp, _, Ans_User}->
                    string:chomp(Ans_User)
            end,
-    gen_tcp:send(Sock, <<"Password:\n">>),
     Pass = receive
                {tcp, _, Ans_Pass}->
                    string:chomp(Ans_Pass)
@@ -52,11 +47,11 @@ create_login(Sock, Mod) ->
           end,
     case Msg of
         {ok, Level, Exp} ->
-            gen_tcp:send(Sock, <<"success\n\\help for command list\n">>),
+            gen_tcp:send(Sock, <<"ok\n">>),
             player(Sock, {User, Pass, Level, Exp}, none);
         Err            ->
             gen_tcp:send(Sock, io_lib:format(<<"~p~n">>, [Err])),
-            create_login(Sock, Mod)
+            start_player(Sock)
     end.
 
 update_level(Player, Result) ->
@@ -91,6 +86,9 @@ player(Sock, Player, GPid) ->
                 [<<"play">>] ->
                     New_GPid = play(User, Level),
                     player(Sock, Player, New_GPid);
+                [<<"logout">>] ->
+                    logout(User),
+                    start_player(Sock);
                 [<<"l">>] ->
                     pleft(GPid),
                     rleft(GPid),

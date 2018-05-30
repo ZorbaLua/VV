@@ -40,7 +40,6 @@ login_manager(Map) ->
             case maps:find(User, Map) of
                 error ->
                     From ! {ok, 1, 0, ?MODULE},
-                    From ! bem_vindo, 
                     login_manager(maps:put(User, {Pass, true, 1, 0, From}, Map));
                 _     ->
                     From ! {user_exists, ?MODULE},

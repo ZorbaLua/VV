@@ -9,8 +9,8 @@ public class Client {
     Socket s;
     BufferedReader in; 
     PrintWriter out;
-    Receiver receiver;
-    Sender sender;
+    Receiver receiver = new Receiver();
+    Sender sender = new Sender();
 
     public class Receiver implements Runnable{
         public ArrayBlockingQueue<GameState> buf;
@@ -24,6 +24,7 @@ public class Client {
                 try{
                     String gameGameStateString = in.readLine();
                     buf.put(new GameState(gameGameStateString));
+                    System.out.println("R :" + gameGameStateString);
                 }
                 catch(Exception e){
                     e.printStackTrace();
@@ -47,6 +48,7 @@ public class Client {
                     while(true){
                         key = buf.take();
                         out.println(key); 
+                        System.out.println("S :" + key);
                     }
                 }
                 catch(Exception e){
@@ -87,18 +89,26 @@ public class Client {
 
     public boolean login(String user, String pass){
         boolean ret = false;
-        out.println("$login " + user + " "+ pass);
-        try{ ret = in.readLine().equals("ok"); }
+        out.println("2");
+        out.println(user);
+        out.println(pass);
+        try{ String a = in.readLine(); ret = a.equals("ok"); System.out.println(a);}
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
 
     public boolean singin(String user, String pass){
         boolean ret = false;
-        out.println("$register " + user + " " + pass);
-        try{ ret = in.readLine().equals("ok"); }
+        out.println("");
+        out.println(user);
+        out.println(pass);
+        try{ String a = in.readLine(); ret = a.equals("ok"); System.out.println(a);}
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
+    }
+    
+    public void singout(){
+        out.println("logout");
     }
 
     public boolean play(){
