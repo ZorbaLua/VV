@@ -19,6 +19,6 @@ void mousePressed() {
   if      (btn[0].MouseIsOver()) { if(play()); menuState = 2; }
   else if (btn[1].MouseIsOver()) { scale(0.5, 0.5); surface.setSize(400, 300); }
   else if (btn[2].MouseIsOver()) { exit(); }
-  else if (btn[3].MouseIsOver()) { singin(); }
+  else if (btn[3].MouseIsOver()) { signin(); }
   else if (btn[4].MouseIsOver()) { if(login()); menuState = 1; }
 }

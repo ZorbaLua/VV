@@ -1,51 +1,45 @@
 -module(game).
--export([start/2, addClient/1]).
+-export([start/2, addClient/3]).
 
 %--------------------------------------------------
 % API
 start(GameManager, Client) -> 
-    Pid = spawn(fun() -> wait(GameManager, Client) end),
-    register(Pid, ?MODULE).
+    spawn(fun() -> wait(GameManager, Client) end).
 
-addClient(Client) ->
-    ?MODULE ! {addClient, Client, self()},
-    receive
-        ok -> ok
-    end.
-
+addClient(Game, Client, GameManager) ->
+    Game ! {addClient, Client, GameManager},
+    ok.
 %--------------------------------------------------
 
 wait(GameManager, Client1) -> 
     receive 
-        {addClient, Client2, GameManager} -> 
-            init(GameManager, Client1, Client2)
+        {addClient, Client2, GameManager} -> init(GameManager, Client1, Client2)
     end.
 
 
 
 init(GameManager, Client1, Client2) ->
-    Champion1 = champion:start(self(), 1),
-    Champion2 = champion:start(self(), 2),
-    RedBerries = berries:start(red),
-    GreenBerries = berries:start(green),
-    {ok, Ts} = timer:send_interval(100, self(), new_state),
-    {ok, Te} = timer:send_interval(10000, self(), send_enemy),
-    Client1 ! {start, self()},
-    Client2 ! {start, self()},
-    Time = earlang:timestamp(),
-    loop({GameManager, {Client1, Client2}, {[Champion1, Champion2], [RedBerries, GreenBerries]}, {Ts, Te}, Time}).
+    LastTime = erlang:monotonic_time(millisecond),
+    Clients = [Client1 , Client2],
+    Champions = [champion:start(self(), 1, LastTime), champion:start(self(), 2, LastTime)],
+    Berries = [red, green], 
+    {ok, TimerEval} = timer:send_interval(10, {eval, self()}),
+    {ok, TimerEnemy} = timer:send_interval(10000, {send_enemy, self()}),
+    Timers = [TimerEval, TimerEnemy],
+    [ C ! {start, self()} || C <- Clients],
+    loop({GameManager, Clients, {Champions, Berries}, Timers, LastTime}).
 
 
 
 
 loop(Args) ->
-    {_GameManager, Clients, State, Timers, _LastTime} = Args,
-    [Client1 | Client2] = Clients,
+    Self = self(),
+    {_GameManager, Clients, State, _Timers, _LastTime} = Args,
+    [Client1 | [Client2 | _]] = Clients,
     {Champions, _Berries} = State,
-    [Champion1 | Champion2] = Champions,
-    {Timer_state, Timer_enemy} = Timers,
+    [Champion1 | [Champion2 | _]] = Champions,
 
-    NowTime = erlang:timestamp(),
+    NowTime = erlang:monotonic_time(millisecond),
     receive
         % receber mensagem do cliente 1 
         {TcpMsg, Client1} -> 
@@ -58,12 +52,11 @@ loop(Args) ->
             loop(Args);
 
         % timer de criacao de inimigo
-        {send_enemy, Timer_enemy} -> 
+        {send_enemy, Self} -> 
             NewArgs = addEnemy(Args),
             loop(NewArgs);
 
-        % timer de criacao de inimigo
-        {new_state, Timer_state} -> 
+        {eval, Self} -> 
             NewArgs = eval(Args),
             loop(NewArgs);
 
@@ -73,20 +66,21 @@ loop(Args) ->
 %--------------------------------------------------
 
 addEnemy(Args) ->
-    % adicionar enimigos a RedBerries
+    % adicionar inimigos a RedBerries
     Args.
 
 eval(Args) ->
-    {_GameManager, Clients, State, _Timers, _LastTime} = Args,
+    {GameManager, Clients, State, Timers, _LastTime} = Args,
     {Champions, _Berries} = State,
-    [Champion1 | Champion2] = Champions,
-    NowTime = erlang:timestamp(),
-    [champio:eval(Ch, NowTime) || Ch <- Champions],
-    % pedir updates
-    C1_String = receive {Ans1, Champion1} -> Ans1 end,
-    C2_String = receive {Ans2, Champion2} -> Ans2 end,
-    State_String = strings:format("{~p,~p}", [C1_String, C2_String]),
-    [ Cl ! {state, State_String, self()} || Cl <- Clients].
+    [Champion1 | [Champion2 | _]] = Champions,
+    NowTime = erlang:monotonic_time(millisecond),
+    [champion:eval(Ch, NowTime) || Ch <- Champions],
+    % receber updates
+    Ch1 = receive {state, A1, Champion1} -> A1 end,
+    Ch2 = receive {state, A2, Champion2} -> A2 end,
+    State_String = lists:flatten(lists:concat([Ch1, " ", Ch2, " [] []\n"])),
+    [ Cl ! {state, State_String, self()} || Cl <- Clients],
+    {GameManager, Clients, State, Timers, NowTime}.
 
 
 
@@ -253,4 +247,4 @@ eval(Args) ->
 %                 { New_Pos2, New_Vel2, New_Acc2, New_A2, New_Va2, New_Acca2 }, Vm, Vd },
 %
 %    {New_GInfo, New_Interval}.
-
+%

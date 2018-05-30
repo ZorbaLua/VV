@@ -4,71 +4,31 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 
+
+
 public class Client {
-    private final int BUFFCAP = 20;
     Socket s;
     BufferedReader in; 
     PrintWriter out;
     Receiver receiver;
-    Sender sender;
+    GameState gameState; 
 
-    public class Receiver implements Runnable{
-        public ArrayBlockingQueue<GameState> buf;
-
-        public Receiver(){
-            this.buf = new ArrayBlockingQueue<GameState>(BUFFCAP);
-        }
-
+    class Receiver implements Runnable{
         public void run(){
+            String gameGameStateString;
             while(true){
                 try{
-                    String gameGameStateString = in.readLine();
-                    buf.put(new GameState(gameGameStateString));
-                }
-                catch(Exception e){
-                    e.printStackTrace();
-                    System.exit(0);
-                }
-            }
-	    }
-    }
-
-    public class Sender implements Runnable{
-        public ArrayBlockingQueue<String> buf;
-
-        public Sender(){
-            this.buf = new ArrayBlockingQueue<String>(BUFFCAP);
-        }
-
-        public void run(){
-            while(true){
-                try{
-                    String key;
-                    while(true){
-                        key = buf.take();
-                        out.println(key); 
+                    gameGameStateString = in.readLine();
+                    if( gameGameStateString.equals("end") ){
+                        gameState = null;   
+                        break;
                     }
+                    gameState.update(gameGameStateString);
                 }
                 catch(Exception e){
                     e.printStackTrace();
                     System.exit(0);
                 }
-            }
-        }
-        public void send(int keycode, boolean isPress){
-            try{
-                String type  = isPress ? "press " : "release ";
-                switch (keyCode) {
-                    case UP:    this.buf.put("$" + type + "up");     break;
-                    case DOWN:  this.buf.put("$" + type + "down");   break;
-                    case LEFT:  this.buf.put("$" + type + "left");   break;
-                    case RIGHT: this.buf.put("$" + type + "right");  break;
-                    default: break;
-                }
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                System.exit(0);
             }
         }
     }
@@ -85,6 +45,7 @@ public class Client {
         }
     }
 
+
     public boolean login(String user, String pass){
         boolean ret = false;
         out.println("login " + user + " "+ pass);
@@ -98,11 +59,11 @@ public class Client {
         return ret;
     }
 
-    public boolean singin(String user, String pass){
+    public boolean signin(String user, String pass){
         boolean ret = false;
         out.println("signin " + user + " " + pass);
         try{ 
-            System.out.println("singin " + user + " " + pass);
+            System.out.println("signin " + user + " " + pass);
             String line = in.readLine();
             System.out.println(line);
             ret = line.equals("ok"); 
@@ -120,24 +81,30 @@ public class Client {
             System.out.println(line);
             ret = line.equals("ok"); 
             if(ret){
-                this.receiver = new Receiver();
-                new Thread(this.receiver).start();
-                this.sender = new Sender();
-                new Thread(this.sender).start();
+                this.gameState = new GameState();
+                new Thread(new Receiver()).start(); 
             }
+
         }
-        catch(Exception e){ System.out.println("Estou aqui so para  ti"); e.printStackTrace(); System.exit(0); }
+        catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
 
     public void send(int keycode, boolean isPress){
-        if(this.sender != null) this.sender.send(keycode, isPress);
-    }
-
-    public GameState getState(){
-        GameState ret=null;
-        try{ ret = this.receiver.buf.take(); }
-        catch(Exception e){ e.printStackTrace(); System.exit(0); }
-        return ret;
+        if(gameState == null) return;
+        try{
+            String type  = isPress ? "press " : "release ";
+            switch (keyCode) {
+                case UP:    out.println("$" + type + "up");     break;
+                case DOWN:  out.println("$" + type + "down");   break;
+                case LEFT:  out.println("$" + type + "left");   break;
+                case RIGHT: out.println("$" + type + "right");  break;
+                default: break;
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            System.exit(0);
+        }
     }
 }

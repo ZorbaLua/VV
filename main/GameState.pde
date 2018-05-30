@@ -1,41 +1,32 @@
 import java.util.ArrayList;
+import java.util.regex.*;
 
 ArrayList<Berrie> stringToListVagas(String s){
         ArrayList<Berrie> ret = new ArrayList<Berrie>();
 
         s = s.substring(1, s.length()-1);
-        String[] res = s.split(",");
-        for(String stringBerrie:res) 
-          ret.add(new Berrie(stringBerrie)); 
+        String[] m = s.split(",");
+        for(String stringBerrie:m) ret.add(new Berrie(stringBerrie)); 
 
         return ret;
 } 
 
-class Vector extends PVector{
-    Vector(float x, float y){
-        super(x, y);
-    }
-    Vector(String s){
-        super(0, 0);
-        s = s.substring(1, s.length()-1);
-        String[] res = s.split(",");
-        this.x = Float.parseFloat(res[0]);
-        this.y = Float.parseFloat(res[1]);
-    }
-}
 
 class Berrie{
     final float radius = 12;
-    Vector pos;
-    Vector vel;
-    Vector acc;
+    PVector pos;
 
     Berrie(String s) {
-        s = s.substring(1, s.length()-1);
-        String[] res = s.split(",");
-        this.pos = new Vector(res[0]);
-        this.vel = new Vector(res[1]);
-        this.acc = new Vector(res[2]);
+       // System.out.println("reconhecer Berrie\n");
+       // s = s.substring(1, s.length()-1);
+       // String[] res = s.split(",");
+       // Pattern r = Pattern.compile("{(.*),(.*)}");
+       // Matcher m = r.matcher(s);
+
+       // if(m.find()){
+       //     System.out.println("reconheceu Berrie\n");
+       //     this.pos = new Vector(m.group(0));
+       // }
     }
 
     void display(boolean isRed) {
@@ -50,37 +41,49 @@ class Berrie{
 
 class Champion{
     final float radius = 24;
-    Vector pos;
-    Vector vel;
-    Vector acc;
-    float rot;
+    PVector pos;
+    float vel, ace;
+    float angle, velAng, aceAng;
     int health;
     int stamina;
 
+    Champion(float x, float y ,float vp, float ap, float angle, float va, float aa, int health, int stamina){
+        this.pos    = new PVector(x,y);
+        this.vel    = vp;
+        this.ace    = ap;
+        this.angle  = angle; 
+        this.velAng = va; 
+        this.aceAng = aa;    
+        this.health = health;    
+        this.stamina= stamina;
+    }
+
     Champion(float x, float y, float angle){
-        this.pos = new Vector(x,y);
-        this.vel = new Vector(0,0);
-        this.acc = new Vector(0,0);
-        this.rot = rot;
-        this.health = 100;
-        this.stamina = 100;
+        this.pos = new PVector(x, y);
+        this.vel = 0.0;
+        this.ace = 0.0;
+        this.angle = 0.0;
+        this.velAng = 0.0;
+        this.aceAng = 0.0;
+        this.health = 0;
+        this.stamina =0;
     }
-    Champion(float x, float y ,float vx, float vy, float ax, float ay, int health, int stamina){
-        this.pos = new Vector(x,y);
-        this.vel = new Vector(vx, vy);
-        this.acc = new Vector(ax, ay);
-        this.health = health;
-        this.stamina = stamina;
-    }
+
     Champion(String s){
-        s = s.substring(1, s.length()-1);
-        String[] res = s.split(",");
-        this.pos = new Vector(res[0]);
-        this.vel = new Vector(res[1]);
-        this.acc = new Vector(res[2]);
-        this.rot = Float.parseFloat(res[3]);
-        this.health = Integer.parseInt(res[4]);
-        this.stamina = Integer.parseInt(res[5]);
+        Pattern r = Pattern.compile("\\{([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\\}]*)\\}");
+        Matcher m = r.matcher(s);
+
+        if(m.find()){
+            //System.out.println("reconheceu Champion\n");
+            this.pos    = new PVector(Float.parseFloat(m.group(1)), Float.parseFloat(m.group(2)));
+            this.vel    = Float.parseFloat(m.group(3));
+            this.ace    = Float.parseFloat(m.group(4));
+            this.angle  = Float.parseFloat(m.group(5));
+            this.velAng = Float.parseFloat(m.group(6));
+            this.aceAng = Float.parseFloat(m.group(7));
+            this.health = Integer.parseInt(m.group(8));
+            this.stamina= Integer.parseInt(m.group(9));
+        }
     }
 
     void display(){
@@ -89,11 +92,11 @@ class Champion{
         fill(127);
         ellipse(this.pos.x,this.pos.y,2*radius,2*radius);
         fill(255);
-        ellipse( sin(this.rot+0.3)*20+this.pos.x, cos(this.rot+0.3)*20+this.pos.y,20,20);
-        ellipse( sin(this.rot-0.3)*20+this.pos.x, cos(this.rot-0.3)*20+this.pos.y,20,20);
+        ellipse( sin(this.angle+0.3)*20+this.pos.x, cos(this.angle+0.3)*20+this.pos.y,20,20);
+        ellipse( sin(this.angle-0.3)*20+this.pos.x, cos(this.angle-0.3)*20+this.pos.y,20,20);
         fill(0);
-        ellipse( sin(this.rot+0.3)*20+this.pos.x, cos(this.rot+0.3)*20+this.pos.y,10,10);
-        ellipse( sin(this.rot-0.3)*20+this.pos.x, cos(this.rot-0.3)*20+this.pos.y,10,10);
+        ellipse( sin(this.angle+0.3)*20+this.pos.x, cos(this.angle+0.3)*20+this.pos.y,10,10);
+        ellipse( sin(this.angle-0.3)*20+this.pos.x, cos(this.angle-0.3)*20+this.pos.y,10,10);
     }
 }
 
@@ -109,20 +112,24 @@ class GameState{
         this.greenBerries = new ArrayList<Berrie>();
     }
 
-    GameState(String s){
-        s = s.substring(1, s.length()-1);
-        String[] res = s.split(",");
-        ArrayList<Vector> aux = new ArrayList<Vector>();
-        this.champs[0] = new Champion(res[0]);
-        this.champs[1] = new Champion(res[1]);
-        this.redBerries = stringToListVagas(res[2]);
-        this.greenBerries = stringToListVagas(res[3]);
+    synchronized void update(String s){
+        Pattern r = Pattern.compile("([^ ]*) ([^ ]*) ([^ ]*) ([^ ])");
+        Matcher m = r.matcher(s);
+
+        if(m.find()){
+            //System.out.println("reconheceu gamestate\n");
+            this.champs[0] = new Champion(m.group(0));
+            this.champs[1] = new Champion(m.group(1));
+            //this.redBerries = stringToListVagas(m.group(2));
+            //this.greenBerries = stringToListVagas(m.group(3));
+        }
     }
 
-    void display(){
+    synchronized void display(){
         for(Champion champ: this.champs) champ.display();
         for(Berrie rb: redBerries) rb.display(true); 
         for(Berrie gb: greenBerries) gb.display(false); 
     }
+
 
 }

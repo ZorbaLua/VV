@@ -3,7 +3,6 @@ import static javax.swing.JOptionPane.*;
 
 // socket
 Client client = new Client("localhost", 12345);
-GameState state;
 
 // frame
 int rJX = 800, rJY = 600;
@@ -39,9 +38,12 @@ void drawMenu(){
     for (Button b: btn) b.display();
 }
 void drawGame() {
-    state = client.getState();
-    state.display();
-    background(255);
+    if(client.gameState == null) menuState = 1;
+    else{
+        background(255);
+        client.gameState.display();
+        System.out.println("aqui");
+    }
 }
 
 void draw() {
@@ -67,11 +69,11 @@ boolean login() {
     return client.login(user, pass);
 }
 
-boolean singin() {
+boolean signin() {
     String user = showInputDialog("Please enter user:");
     String pass = showInputDialog("Please enter password:");
     if(user==null || pass==null) return false;
-    return client.singin(user, pass);
+    return client.signin(user, pass);
 }
 
 boolean play() {

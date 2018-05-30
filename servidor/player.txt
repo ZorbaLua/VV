@@ -1,3 +1,0 @@
-signin q q
-login q q
-play

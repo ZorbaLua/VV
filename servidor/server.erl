@@ -12,6 +12,7 @@ start(Port) ->
 %--------------------------------------------------
 
 acceptor(LSock) ->
+    io:fwrite("",[]),
     {ok, Sock} = gen_tcp:accept(LSock),
     Client = spawn(fun() -> clientLoop_LoginManager(Sock) end),
     ok = gen_tcp:controlling_process(Sock, Client),
@@ -26,7 +27,7 @@ acceptor(LSock) ->
 clientLoop_LoginManager(Sock) ->
     receive
         {tcp, _, Request}->
-            [Comand | Args] = string:split(Request, " ", all),
+            [Comand | Args] = string:split(string:chomp(Request), " ", all),
             eval_lm(Sock, Comand, Args);
         %receber erro de tcp
         {tcp_closed, _} -> free;
@@ -38,29 +39,34 @@ clientLoop_LoginManager(Sock) ->
 eval_lm(Sock, Comand, Args) ->
     case Comand of
         <<"login">> -> 
+            io:fwrite("<-login\n"),
             [User | [Pass | [] ]] = Args,
             case login_manager:login(User, Pass) of 
                 % login bem sucedido processo avanca proximo estado
                 {ok, PlayerInfo} -> 
-                    io:fwrite("estou aqui"),
                     ok = gen_tcp:send(Sock, "ok\n"),
+                    io:fwrite("->ok\n"),
                     clientLoop_GameManager(Sock, PlayerInfo);
                 % login mal sucedido processo fica no mesmo estado
                 _ ->
                     ok = gen_tcp:send(Sock, "error\n"),
+                    io:fwrite("->error\n"),
                     clientLoop_LoginManager(Sock)
             end;
 
         <<"signin">> ->
+            io:fwrite("<-signin\n"),
             [User | [Pass | [] ]] = Args,
             case login_manager:signin(User, Pass) of 
                 % registo bem sucedido
                 ok ->
                     ok = gen_tcp:send(Sock, "ok\n"),
+                    io:fwrite("->ok\n"),
                     clientLoop_LoginManager(Sock);
                 % registo mal sucedido
                 _ -> 
                     ok = gen_tcp:send(Sock, "error\n"),
+                    io:fwrite("->error\n"),
                     clientLoop_LoginManager(Sock)
             end
     end.
@@ -90,16 +96,20 @@ clientLoop_GameManager(Sock, PlayerInfo) ->
     end.
 
 
-eval_gm(Comand, Sock, PlayerInfo) ->
+eval_gm(C, Sock, PlayerInfo) ->
+    Comand = string:chomp(C),
     case Comand of
         % receber o pid do jogo, e espere pela mensagem start do game 
         <<"play">> ->
+            io:fwrite("<-play\n"),
             Game = game_manager:enroll(PlayerInfo),
             clientLoop_Game(Sock, PlayerInfo, Game);
 
         % receber pedido de informacoes
         <<"info">> ->
+            io:fwrite("<-info\n"),
             ok = gen_tcp:send(Sock, PlayerInfo),
+            io:fwrite("->~p\n",[PlayerInfo]),
             clientLoop_GameManager(Sock, PlayerInfo);
 
         % receber qualquer coisa
@@ -117,7 +127,7 @@ eval_gm(Comand, Sock, PlayerInfo) ->
 
 
 %--------------------------------------------------
-% comunicacao cliente com login manager
+% comunicacao cliente com jogo a decorrer
 clientLoop_Game(Sock, PlayerInfo, Game) ->
     {User, _, _, _} = PlayerInfo,
     receive
@@ -126,7 +136,7 @@ clientLoop_Game(Sock, PlayerInfo, Game) ->
             Game ! {Msg, self()},
             clientLoop_Game(Sock, PlayerInfo, Game);
 
-        % receber mansagem de start do jogo
+        % receber mensagem de start do jogo
         {start, Game} ->
             ok = gen_tcp:send(Sock, "ok\n"),
             clientLoop_Game(Sock, PlayerInfo, Game);

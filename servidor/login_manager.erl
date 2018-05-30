@@ -56,9 +56,9 @@ aux_close_account(User, Pass, From, Map) ->
         error ->
             From ! {invalid_user, ?MODULE},
             loop(Map);
-        {ok, {Value, _}} ->
+        {ok, {P, _}} ->
             if
-                Value == Pass ->
+                P == Pass ->
                     From ! {ok, ?MODULE},
                     loop(maps:remove(User, Map));
                 true ->
