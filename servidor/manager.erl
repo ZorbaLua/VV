@@ -27,7 +27,7 @@ start_player(Sock) ->
             case Ans of
                 <<"1\n">> -> create_login(Sock, create_account);
                 <<"2\n">> -> create_login(Sock, login);
-                _         -> 
+                _         ->
                     gen_tcp:send(Sock, <<"please try again\n">>),
                     start_player(Sock)
             end
@@ -51,7 +51,7 @@ create_login(Sock, Mod) ->
               login          -> login(User, Pass)
           end,
     case Msg of
-        {ok, Level, Exp} -> 
+        {ok, Level, Exp} ->
             gen_tcp:send(Sock, <<"success\n\\help for command list\n">>),
             player(Sock, {User, Pass, Level, Exp}, none);
         Err            ->
@@ -62,14 +62,14 @@ create_login(Sock, Mod) ->
 update_level(Player, Result) ->
     {User, Pass, Level, Exp} = Player,
     case Result of
-        win  -> 
+        win  ->
             Exp = Exp+1,
             if
                 Level == Exp ->
                     Level = Level+1,
                     Exp = 0
             end;
-        _    -> 
+        _    ->
             Level = Level+1
     end,
     {User, Pass, Level, Exp}.
@@ -80,19 +80,15 @@ update_level(Player, Result) ->
 player(Sock, Player, GPid) ->
     {User, Pass, Level, Exp} = Player,
     receive
-        {tcp, _, Msg} -> 
+        {tcp, _, Msg} ->
             case string:split(string:chomp(Msg), <<" ">>, all) of
-                [<<"\\help">>] -> 
-                    gen_tcp:send(Sock, [<<"\\help - command list\n">>,
-                                        <<"\\info - your info\n">>]),
-                    player(Sock, Player, GPid);
-                [<<"\\info">>] ->
+                [<<"info">>] ->
                     gen_tcp:send(Sock, [<<"Username: ">>, User, <<"\n">>,
                                         <<"Password: ">>, Pass, <<"\n">>,
                                         io_lib:format(<<"Level: ~p~n">>,   [Level]),
-                                        io_lib:format(<<"Exp: ~p~n">>,       [Exp])]),
+                                        io_lib:format(<<"Exp: ~p~n">>,     [Exp])]),
                     player(Sock, Player, GPid);
-                [<<"\\play">>] ->
+                [<<"play">>] ->
                     New_GPid = play(User, Level),
                     player(Sock, Player, New_GPid);
                 [<<"l">>] ->
@@ -107,7 +103,7 @@ player(Sock, Player, GPid) ->
                     pright(GPid),
                     rright(GPid),
                     player(Sock, Player, GPid);
-                _ ->  
+                _ ->
                     player(Sock, Player, GPid)
             end;
         {tcp_closed, _} ->
@@ -130,4 +126,3 @@ player(Sock, Player, GPid) ->
             gen_tcp:send(Sock, io_lib:format("~p~n", [Err])),
             player(Sock, Player, GPid)
     end.
-
