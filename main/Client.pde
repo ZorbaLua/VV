@@ -71,6 +71,10 @@ public class Client {
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
+    
+    public void singout(){
+        out.println("logout");
+    }
 
     public boolean play(){
         boolean ret = false;
