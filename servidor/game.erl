@@ -22,7 +22,7 @@ init(GameManager, Client1, Client2) ->
     LastTime = erlang:monotonic_time(millisecond),
     Clients = [Client1 , Client2],
     Champions = [champion:start(self(), 1, LastTime), champion:start(self(), 2, LastTime)],
-    Berries = [red, green], 
+    Berries = [berries:start(self(), red), berries:start(self(), green)], 
     {ok, TimerEval} = timer:send_interval(100, {eval, self()}),
     {ok, TimerEnemy} = timer:send_interval(10000, {send_enemy, self()}),
     Timers = [TimerEval, TimerEnemy],
@@ -71,15 +71,22 @@ addEnemy(Args) ->
     Args.
 
 eval(Args) ->
-    {GameManager, Clients, State, Timers, _LastTime} = Args,
-    {Champions, _Berries} = State,
-    [Champion1 | [Champion2 | _]] = Champions,
     NowTime = erlang:monotonic_time(millisecond),
+    {GameManager, Clients, State, Timers, LastTime} = Args,
+    {Champions, Berries} = State,
+    [Champion1 | [Champion2 | _]] = Champions,
+    [RedB | [GreenB | _]] = Berries,
+
+    % caluclar nova posicao do jogadores
     [champion:eval(Ch, NowTime) || Ch <- Champions],
-    % receber updates
-    Ch1 = receive {state, A1, Champion1} -> A1 end,
-    Ch2 = receive {state, A2, Champion2} -> A2 end,
-    State_String = lists:flatten(lists:concat([Ch1, " ", Ch2, " [] []\n"])),
+    {Ch1, P1}= receive {ok, A1, Champion1} -> A1 end,
+    {Ch2, P2} = receive {ok, A2, Champion2} -> A2 end,
+
+    % verificar se hove colisoes calcular nova posicao das berries
+    [berries:eval(ListB, {P1, P2},LastTime-NowTime) || ListB <- Berries],
+    {BR, ColG1, ColG2} = receive {ok, AnsR, RedB} -> AnsR end,
+    {BG, ColG1, ColG2} = receive {ok, AnsG, GreenB} -> AnsG end,
+    State_String = lists:flatten(lists:concat([Ch1," ",Ch2," ",BR," ",BG,"\n"])),
     [ Cl ! {state, State_String, self()} || Cl <- Clients],
     {GameManager, Clients, State, Timers, NowTime}.
 

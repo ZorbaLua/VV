@@ -12,22 +12,21 @@ def user(d):
     s.connect((host, port))
     msg = 'signin {} {}\n'.format(d,d)
     s.send(msg.encode())
-    msg = 'login {} {}\n'.format(d,d)
-    s.send(msg.encode())
-    msg = 'play\n'
-    s.send(msg.encode())
+    data = s.recv(BUFFER_SIZE)
 
-    while 1:
-        data = s.recv(BUFFER_SIZE)
-        print(data.decode())
+    #"msg = 'login {} {}\n'.format(d,d)
+    #"s.send(msg.encode())
+    #"msg = 'play\n'
+    #"s.send(msg.encode())
+
+    #while 1:
+    #    data = s.recv(BUFFER_SIZE)
+    #    print(data.decode())
 
 try:
     for i in range(2):
         t = threading.Thread(target=user,args=(lc[i],))
         t.start()
-
-    while 1:
-        pass
 except:
    print ("ERRO A CRIAR A THREAD")
 

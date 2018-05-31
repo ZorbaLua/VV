@@ -41,16 +41,15 @@ class Berrie{
 
 class Champion{
     final float radius = 24;
-    PVector pos;
-    float vel, ace;
+    PVector pos, vel, ace;
     float angle, velAng, aceAng;
     int health;
     int stamina;
 
-    Champion(float x, float y ,float vp, float ap, float angle, float va, float aa, int health, int stamina){
+    Champion(float x, float y ,float vx, float vy, float ax, float ay, float angle, float va, float aa, int health, int stamina){
         this.pos    = new PVector(x,y);
-        this.vel    = vp;
-        this.ace    = ap;
+        this.vel    = new PVector(vx,vy);
+        this.ace    = new PVector(ax, ay);
         this.angle  = angle; 
         this.velAng = va; 
         this.aceAng = aa;    
@@ -60,8 +59,8 @@ class Champion{
 
     Champion(float x, float y, float angle){
         this.pos = new PVector(x, y);
-        this.vel = 0.0;
-        this.ace = 0.0;
+        this.vel = new PVector(0.0, 0.0);
+        this.ace = new PVector(0.0, 0.0);
         this.angle = 0.0;
         this.velAng = 0.0;
         this.aceAng = 0.0;
@@ -70,33 +69,35 @@ class Champion{
     }
 
     Champion(String s){
-        Pattern r = Pattern.compile("\\{([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\\}]*)\\}");
+        Pattern r = Pattern.compile("\\{([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\\}]*)\\}");
         Matcher m = r.matcher(s);
 
         if(m.find()){
             //System.out.println("reconheceu Champion\n");
             this.pos    = new PVector(Float.parseFloat(m.group(1)), Float.parseFloat(m.group(2)));
-            this.vel    = Float.parseFloat(m.group(3));
-            this.ace    = Float.parseFloat(m.group(4));
-            this.angle  = Float.parseFloat(m.group(5));
-            this.velAng = Float.parseFloat(m.group(6));
-            this.aceAng = Float.parseFloat(m.group(7));
-            this.health = Integer.parseInt(m.group(8));
-            this.stamina= Integer.parseInt(m.group(9));
+            this.vel    = new PVector(Float.parseFloat(m.group(3)), Float.parseFloat(m.group(4)));
+            this.ace    = new PVector(Float.parseFloat(m.group(5)), Float.parseFloat(m.group(6)));
+            this.angle  = Float.parseFloat(m.group(7));
+            this.velAng = Float.parseFloat(m.group(8));
+            this.aceAng = Float.parseFloat(m.group(9));
+            this.health = Integer.parseInt(m.group(10));
+            this.stamina= Integer.parseInt(m.group(11));
         }
     }
 
     void display(){
+        float dx = this.pos.x * rJX; 
+        float dy = this.pos.y * rJY; 
         stroke(255);
         strokeWeight(2);
         fill(127);
-        ellipse(this.pos.x,this.pos.y,2*radius,2*radius);
+        ellipse(dx,dy,2*radius,2*radius);
         fill(255);
-        ellipse( sin(this.angle+0.3)*20+this.pos.x, cos(this.angle+0.3)*20+this.pos.y,20,20);
-        ellipse( sin(this.angle-0.3)*20+this.pos.x, cos(this.angle-0.3)*20+this.pos.y,20,20);
+        ellipse( sin(this.angle+0.3)*20+dx, cos(this.angle+0.3)*20+dy,20,20);
+        ellipse( sin(this.angle-0.3)*20+dx, cos(this.angle-0.3)*20+dy,20,20);
         fill(0);
-        ellipse( sin(this.angle+0.3)*20+this.pos.x, cos(this.angle+0.3)*20+this.pos.y,10,10);
-        ellipse( sin(this.angle-0.3)*20+this.pos.x, cos(this.angle-0.3)*20+this.pos.y,10,10);
+        ellipse( sin(this.angle+0.3)*20+dx, cos(this.angle+0.3)*20+dy,10,10);
+        ellipse( sin(this.angle-0.3)*20+dx, cos(this.angle-0.3)*20+dy,10,10);
     }
 }
 
@@ -118,8 +119,8 @@ class GameState{
 
         if(m.find()){
             //System.out.println("reconheceu gamestate\n");
-            this.champs[0] = new Champion(m.group(0));
-            this.champs[1] = new Champion(m.group(1));
+            this.champs[0] = new Champion(m.group(1));
+            this.champs[1] = new Champion(m.group(2));
             //this.redBerries = stringToListVagas(m.group(2));
             //this.greenBerries = stringToListVagas(m.group(3));
         }

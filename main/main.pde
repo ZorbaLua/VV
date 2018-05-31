@@ -50,7 +50,6 @@ void drawGame() {
     else{
         background(255);
         client.gameState.display();
-        System.out.println("menuState" + menuState);
     }
 }
 
