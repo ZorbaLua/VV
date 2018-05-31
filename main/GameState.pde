@@ -109,8 +109,8 @@ class GameState{
     ArrayList<Berrie> greenBerries;
 
     GameState(){
-        this.champs[0] = new Champion(2,2,0);
-        this.champs[1] = new Champion(-2,2,180);
+        this.champs[0] = new Champion(2,2,90); // 0
+        this.champs[1] = new Champion(-2,2,270); // 180
         this.redBerries = new ArrayList<Berrie>();
         this.greenBerries = new ArrayList<Berrie>();
     }
