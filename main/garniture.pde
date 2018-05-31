@@ -1,29 +1,4 @@
 
-class Ranks {
-    String label;
-    float x, y;
-    Player a, b, c;
-
-
-    // ----------------------------------------------------------------------- //
-  Ranks(String labelB, float xpos, float ypos) {
-    label = labelB;
-    x = xpos;
-    y = ypos;
-  }
-
-  // ----------------------------------------------------------------------- //
-  void display() {
-    fill(218);
-    stroke(141);
-    rect(x, y, 10, 10, 10);
-    textAlign(CENTER, CENTER);
-    fill(0);
-    text(label, x + (10/2), y + (10/2));
-  }
-
-}
-
 class Button {
     String label;
     float x, y, w, h;
