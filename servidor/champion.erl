@@ -27,9 +27,7 @@ loop(Game, State, Life, LastTime) ->
             loop(Game, NewState, Life, NowTime);
 
 
-        {eval, NowTime, Game} -> 
-            {NewState, NewLife} = evalAux(Game, State, Life, LastTime-NowTime),
-            loop(Game, NewState, NewLife, NowTime);
+        {eval, NowTime, Game} -> evalAux(Game, State, Life, LastTime, NowTime);
 
 
         {lostLife, Game} ->
@@ -48,22 +46,26 @@ loop(Game, State, Life, LastTime) ->
 
 %--------------------------------------------------
 
-evalAux(Game, State, Life, Dtime) ->
-    NewState = update(State, Life, Dtime),
+evalAux(Game, State, Life, LastTime, NowTime) ->
+    NewState = update(State, Life, LastTime-NowTime),
     {Pos,_,_,_,_,_} = NewState,
     {Health, Stamina} = Life,
-    {X, Y} = Pos, 
     if 
-        (X>1) or (X<0) or (Y>1) or (Y<1) -> 
-            NewHealth = Health - 1,
-            StringState = toString(NewState, {NewHealth, Stamina}),
-            Game ! {ok, {StringState, Pos}, self()},
-            {NewState, {NewHealth, Stamina}};
-
+        Health =< 0 -> Game ! {dead, self()};
         true ->
-            StringState = toString(NewState, {Health, Stamina}),
-            Game ! {ok, {StringState, Pos}, self()},
-            {NewState, {Health, Stamina}}
+            {X, Y} = Pos, 
+            if 
+                (X>1) or (X<0) or (Y>1) or (Y<0) -> 
+                    ResetState = {{0.5, 0.5},{0.0,0.0},{0.0,0.0},math:pi(),0.0,0.0},
+                    StringState = toString(ResetState,{Health-1, Stamina}),
+                    Game ! {ok, {StringState, Pos}, self()},
+                    loop(Game,ResetState, {Health-1, Stamina}, NowTime);
+
+                true ->
+                    StringState = toString(NewState, Life),
+                    Game ! {ok, {StringState, Pos}, self()},
+                    loop(Game, NewState, Life, NowTime)
+            end
     end.
 
 
@@ -100,8 +102,8 @@ aux_KeyFun(State, Life, Data, NowTime) ->
         <<"press">> -> 
             case KeyCode of
                 <<"up">>    -> {Pos, Vel, {math:cos(A)*0.000000000001, math:cos(A)*0.000000000001}, A, Va, Acca};
-                <<"left">>  -> {Pos, Vel, Acc, A, Va, -0.0000001};
-                <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0000001}
+                <<"left">>  -> {Pos, Vel, Acc, A, Va, -0.0001};
+                <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0001}
             end;
 
 
