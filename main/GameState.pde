@@ -113,7 +113,7 @@ class GameState{
     }
 
     synchronized void update(String s){
-        Pattern r = Pattern.compile("([^ ]*) ([^ ]*) ([^ ]*) ([^ ])");
+        Pattern r = Pattern.compile("([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)");
         Matcher m = r.matcher(s);
 
         if(m.find()){

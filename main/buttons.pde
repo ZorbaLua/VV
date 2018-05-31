@@ -10,11 +10,11 @@ void startButtons() {
 }
 
 void keyPressed() {
-    client.send(keyCode, true);
+    client.send(keyCode, "press ");
 }
 
 void keyReleased() {
-    client.send(keyCode, true);
+    client.send(keyCode, "release ");
 }
 
 void mousePressed() {
@@ -24,5 +24,5 @@ void mousePressed() {
   else if (btn[3].MouseIsOver() )                  { ; }
   else if (btn[4].MouseIsOver() )                  { exit(); }
   else if (btn[5].MouseIsOver() && menuState == 0) { if(login())  menuState = 1; }
-  else if (btn[6].MouseIsOver() && menuState == 0) { if(singin()) menuState = 1; }
+  else if (btn[6].MouseIsOver() && menuState == 0) { if(signin()) menuState = 1; }
 }

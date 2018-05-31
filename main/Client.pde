@@ -94,15 +94,14 @@ public class Client {
         return ret;
     }
 
-    public void send(int keycode, boolean isPress){
+    public void send(int keycode, String type){
         if(gameState == null) return;
         try{
-            String type  = isPress ? "press " : "release ";
             switch (keyCode) {
-                case UP:    out.println("$" + type + "up");     break;
-                case DOWN:  out.println("$" + type + "down");   break;
-                case LEFT:  out.println("$" + type + "left");   break;
-                case RIGHT: out.println("$" + type + "right");  break;
+                case UP:    out.println(type + "up");     break;
+                case DOWN:  out.println(type + "down");   break;
+                case LEFT:  out.println(type + "left");   break;
+                case RIGHT: out.println(type + "right");  break;
                 default: break;
             }
         }

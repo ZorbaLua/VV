@@ -23,7 +23,7 @@ init(GameManager, Client1, Client2) ->
     Clients = [Client1 , Client2],
     Champions = [champion:start(self(), 1, LastTime), champion:start(self(), 2, LastTime)],
     Berries = [red, green], 
-    {ok, TimerEval} = timer:send_interval(10, {eval, self()}),
+    {ok, TimerEval} = timer:send_interval(100, {eval, self()}),
     {ok, TimerEnemy} = timer:send_interval(10000, {send_enemy, self()}),
     Timers = [TimerEval, TimerEnemy],
     [ C ! {start, self()} || C <- Clients],
@@ -40,6 +40,7 @@ loop(Args) ->
     [Champion1 | [Champion2 | _]] = Champions,
 
     NowTime = erlang:monotonic_time(millisecond),
+
     receive
         % receber mensagem do cliente 1 
         {TcpMsg, Client1} -> 

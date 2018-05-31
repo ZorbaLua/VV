@@ -11,7 +11,7 @@ start(Game, I, Time) ->
     end.
 
 keyFun(Champion, TcpMesg, NowTime) -> 
-    Data = strings:split(TcpMesg, "", all),
+    Data = string:split(string:chomp(TcpMesg), " ", all),
     Champion ! {keyFun, Data, NowTime, self()}.
 
 
@@ -23,12 +23,13 @@ eval(Champion, NowTime) ->
 loop(Game, State, Life, LastTime) ->
     receive
         {keyFun, Data, NowTime, Game} -> 
-            State = aux_KeyFun(State, Life, Data, LastTime-NowTime),
-            loop(Game, State, Life, NowTime);
+            NewState = aux_KeyFun(State, Life, Data, LastTime-NowTime),
+            loop(Game, NewState, Life, NowTime);
 
         {eval, NowTime, Game} -> 
             NewState = update(State, Life, LastTime-NowTime),
-            Game ! {state, toString(NewState, Life), self()},
+            StringState = toString(NewState, Life),
+            Game ! {state, StringState, self()},
             loop(Game, NewState, Life, NowTime)
     end.
 
@@ -45,7 +46,7 @@ update(State, Life, Dtime) ->
     {Health, Stamina} = Life,
     update(Pos, Vel, Acc, A, Va, Acca, Dtime, Health, Stamina).
 update({Posx, Posy}, Velocity, Acelaration, Angle, AngularVelocity, AngularAcelaration, Dtime, _Health, _Stamina) ->
-    New_AngularVelocity= AngularAcelaration*Dtime * AngularVelocity,
+    New_AngularVelocity= AngularAcelaration*Dtime + AngularVelocity,
     New_Angle = New_AngularVelocity*Dtime + Angle,
 
     New_Velocity = Acelaration*Dtime + Velocity,
@@ -57,22 +58,22 @@ update({Posx, Posy}, Velocity, Acelaration, Angle, AngularVelocity, AngularAcela
 
 % fazer update, retornat estado com acelarçao mudad
 aux_KeyFun(State, Life, Data, NowTime) ->
-    [KeyState | KeyCode ] = Data,
+    [KeyState | [KeyCode | _]] = Data,
     {Pos, Vel, Acc, A, Va, Acca} = update(State, Life, NowTime),
     case KeyState of
-        press -> 
+        <<"press">> -> 
             case KeyCode of
-                up   -> {Pos, Vel, 1, A, Va, Acca};
-                left -> {Pos, Vel, Acc, A, Va, -1};
-                rigt -> {Pos, Vel, Acc, A, Va, 1}
+                <<"up">>    -> {Pos, Vel, 0.0001, A, Va, Acca};
+                <<"left">>  -> {Pos, Vel, Acc, A, Va, -0.0001};
+                <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0001}
             end;
 
 
-        release -> 
+        <<"release">> -> 
             case KeyCode of
-                up   -> {Pos, Vel, 0, A, Va, Acca};
-                left -> {Pos, Vel, Acc, A, Va, 0};
-                rigt -> {Pos, Vel, Acc, A, Va, 0}
+                <<"up">>    -> {Pos, Vel, 0.0, A, Va, Acca};
+                <<"left">>  -> {Pos, Vel, Acc, A, Va, 0.0};
+                <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0}
             end
     end.
 
