@@ -75,6 +75,20 @@ public class Client {
         out.println("logout");
     }
 
+    public void updateInfo() {
+      try{
+          System.out.println("ranks");
+          String line = in.readLine();
+          topPlayers = line.split("\\s+");
+
+          System.out.println("infojog");
+          line = in.readLine();
+          playerInfo  = line.split("\\s+");
+      }
+      catch(Exception e){ e.printStackTrace(); System.exit(0); }
+    }
+
+
     public boolean play(){
         boolean ret = false;
         try{
