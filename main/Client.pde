@@ -1,17 +1,16 @@
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 
-
-
 public class Client {
     Socket s;
-    BufferedReader in; 
+    BufferedReader in;
     PrintWriter out;
     Receiver receiver;
-    GameState gameState; 
+    GameState gameState;
 
     class Receiver implements Runnable{
         public void run(){
@@ -20,7 +19,7 @@ public class Client {
                 try{
                     gameGameStateString = in.readLine();
                     if( gameGameStateString.equals("end") ){
-                        gameState = null;   
+                        gameState = null;
                         break;
                     }
                     gameState.update(gameGameStateString);
@@ -49,32 +48,46 @@ public class Client {
     public boolean login(String user, String pass){
         boolean ret = false;
         out.println("login " + user + " "+ pass);
-        try{ 
+        try{
             System.out.println("login " + user + " " + pass);
             String line = in.readLine();
             System.out.println(line);
-            ret = line.equals("ok"); 
+            ret = line.equals("ok");
         }
-        catch(Exception e){ e.printStackTrace(); System.exit(0); }
+        catch(Exception e){ showMessageDialog(null, "Erro Login Falhado", "Erro Login Falhado",ERROR_MESSAGE); e.printStackTrace(); System.exit(0); }
         return ret;
     }
 
     public boolean signin(String user, String pass){
         boolean ret = false;
         out.println("signin " + user + " " + pass);
-        try{ 
+        try{
             System.out.println("signin " + user + " " + pass);
             String line = in.readLine();
             System.out.println(line);
-            ret = line.equals("ok"); 
+            ret = line.equals("ok");
         }
         catch(Exception e){ e.printStackTrace(); System.exit(0); }
         return ret;
     }
-    
+
     public void singout(){
         out.println("logout");
     }
+
+    public void updateInfo() {
+      try{
+          System.out.println("ranks");
+          String line = in.readLine();
+          topPlayers = line.split("\\s+");
+
+          System.out.println("infojog");
+          line = in.readLine();
+          playerInfo  = line.split("\\s+");
+      }
+      catch(Exception e){ e.printStackTrace(); System.exit(0); }
+    }
+
 
     public boolean play(){
         boolean ret = false;
@@ -83,10 +96,10 @@ public class Client {
             System.out.println("play");
             String line = in.readLine();
             System.out.println(line);
-            ret = line.equals("ok"); 
+            ret = line.equals("ok");
             if(ret){
                 this.gameState = new GameState();
-                new Thread(new Receiver()).start(); 
+                new Thread(new Receiver()).start();
             }
 
         }
