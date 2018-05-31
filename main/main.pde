@@ -68,12 +68,27 @@ void drawRanks(int x, int y) {
    for (int i = 0; i<3; i++) { aux = String.format("%s - %s", topPlayers[6+i*2], topPlayers[7+i*2]); text (aux, x, y+110+20*i); }
 }
 
+void drawHeart(int x, int y) {
+  beginShape();
+    vertex(50+x, 15+y);
+    bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
+    vertex(50+x, 15+y);
+    bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
+  endShape();
+}
+
 void drawGame() {
     if(client.gameState == null) menuState = 1;
     else{
         background(255);
         client.gameState.display();
     }
+}
+
+void drawHP(int x, int y, int vida, int energia){
+  fill(0);
+  for (int i=0; i<vida; i++) { drawHeart(x+50*i,y); }
+  for (int i=0; i<energia; i++) { ellipse(i*3+x,y + 50,5,5); }
 }
 
 void draw() {

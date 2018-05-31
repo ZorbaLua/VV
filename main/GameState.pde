@@ -7,10 +7,10 @@ ArrayList<Berrie> stringToListVagas(String s){
         if(s.length() <= 2) return ret;
         s = s.substring(2, s.length()-2);
         String[] m = s.split("\\};\\{");
-        for(String stringBerrie:m) ret.add(new Berrie(stringBerrie)); 
+        for(String stringBerrie:m) ret.add(new Berrie(stringBerrie));
 
         return ret;
-} 
+}
 
 
 class Berrie{
@@ -48,10 +48,10 @@ class Champion{
         this.pos    = new PVector(x,y);
         this.vel    = new PVector(vx,vy);
         this.ace    = new PVector(ax, ay);
-        this.angle  = angle; 
-        this.velAng = va; 
-        this.aceAng = aa;    
-        this.health = health;    
+        this.angle  = angle;
+        this.velAng = va;
+        this.aceAng = aa;
+        this.health = health;
         this.stamina= stamina;
     }
 
@@ -84,8 +84,12 @@ class Champion{
     }
 
     void display(){
-        float dx = this.pos.x * rJX; 
-        float dy = this.pos.y * rJY; 
+
+        if champs[0] = this {drawHP(50,50,hp,stamina)} else {drawHP(50,150,hp,stamina)}
+
+        // vida
+        float dx = this.pos.x * rJX;
+        float dy = this.pos.y * rJY;
         stroke(255);
         strokeWeight(2);
         fill(127);
@@ -126,8 +130,8 @@ class GameState{
 
     synchronized void display(){
         for(Champion champ: this.champs) champ.display();
-        for(Berrie rb: redBerries) rb.display(true); 
-        for(Berrie gb: greenBerries) gb.display(false); 
+        for(Berrie rb: redBerries) rb.display(true);
+        for(Berrie gb: greenBerries) gb.display(false);
     }
 
 
