@@ -16,13 +16,6 @@ eval(Champion, Players, DiffTime) ->
 
 loop(Game, Color, Berries) ->
     receive
-        {eval, Players, Dtime, Game} -> 
-            {NewBerries, C1, C2} = update(Berries, Color, Players, Dtime),
-            StringState = toString(NewBerries),
-            Game ! {ok, {StringState, C1, C2}, self()},
-            loop(Game, Color, Berries);
-
-
         {send_enemy, Game} ->
             New_Berries = addBerrie(Berries),
             loop(Game, Color, New_Berries);
@@ -31,10 +24,13 @@ loop(Game, Color, Berries) ->
             New_Berries = addBerrie(Berries),
             loop(Game, Color, New_Berries);
 
+        {eval, Players, Dtime, Game} -> 
+            {NewBerries, C1, C2} = update(Berries, Color, Players, Dtime),
+            StringState = toString(NewBerries),
+            Game ! {ok, {StringState, C1, C2}, self()},
+            loop(Game, Color, Berries);
+
         {finish, Game} -> free
-
-
-
 
     end.
 
@@ -63,7 +59,7 @@ updateRed(Berries, {P1, P2},_Dtime) ->
 
 
 noCollision({Bx, By}, {Px,Py}) ->
-    math:sqrt( math:pow((Px-Bx),2) + math:pow((Py-By),2) ) < 24.
+    math:sqrt( math:pow((Px-Bx),2) + math:pow((Py-By),2) ) < 12.
 
 % tranformar em sring
 

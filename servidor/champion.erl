@@ -101,7 +101,7 @@ aux_KeyFun(State, Life, Data, NowTime) ->
     case KeyState of
         <<"press">> -> 
             case KeyCode of
-                <<"up">>    -> {Pos, Vel, {math:cos(A)*0.000000000001, math:cos(A)*0.000000000001}, A, Va, Acca};
+                <<"up">>    -> {Pos, Vel, {math:cos(A)/100000000000000, math:cos(A)/100000000000000}, A, Va, Acca};
                 <<"left">>  -> {Pos, Vel, Acc, A, Va, -0.0001};
                 <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0001}
             end;
