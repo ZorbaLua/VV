@@ -85,7 +85,7 @@ class Champion{
 
     void display(){
 
-        if champs[0] = this {drawHP(50,50,hp,stamina)} else {drawHP(50,150,hp,stamina)}
+        if (this == client.gameState.champs[0]) {drawHP(50,50,health,stamina);} else {drawHP(50,150,health,stamina);}
 
         // vida
         float dx = this.pos.x * rJX;
