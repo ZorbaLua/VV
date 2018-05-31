@@ -28,7 +28,8 @@ logout(User) ->
 top3() ->
     ?MODULE ! {top3, self()},
     List = receive
-               {M, ?MODULE} -> lists:map(fun({U, {_, _, L, E, _}}) -> {U, L, E} end, maps:to_list(M))
+               {M, ?MODULE} -> 
+                   lists:map(fun({U, {_, _, L, E, _}}) -> {U, L, E} end, maps:to_list(M))
            end,
     case lists:reverse(lists:keysort(2, lists:keysort(3, List))) of
         [E1]                   -> {1, [E1]};
@@ -75,7 +76,7 @@ login_manager(Map) ->
                 error ->
                     From ! {invalid_user, ?MODULE},
                     login_manager(Map);
-                {ok, {Pass, _, Pid, Level, Exp}}->
+                {ok, {Pass, _, Level, Exp, Pid}}->
                     From ! {ok, ?MODULE},
                     login_manager(maps:update(User, {Pass, false, Level, Exp, Pid}, Map))
             end;

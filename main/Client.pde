@@ -61,7 +61,7 @@ public class Client {
             try{
                 String type  = isPress ? "press " : "release ";
                 switch (keycode) {
-                    case UP:    this.buf.put(type + "front");     break;
+                    case UP:    this.buf.put(type + "front");  break;
                     case LEFT:  this.buf.put(type + "left");   break;
                     case RIGHT: this.buf.put(type + "right");  break;
                     default: break;
