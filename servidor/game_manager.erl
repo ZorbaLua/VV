@@ -17,6 +17,7 @@ enroll(PlayerInfo) ->
             io:fwrite("* inscrito\n"), 
             GamePid 
     end.
+
     
 
 %--------------------------------------------------
@@ -27,7 +28,7 @@ loop(MapLevel) ->
             {NewMapLevel, Game} = findGame(MapLevel, Level, From),
             From ! {Game, ?MODULE},
             loop(NewMapLevel)
-        %{end, From} ->
+
     end.
 
 %--------------------------------------------------

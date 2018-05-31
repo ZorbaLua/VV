@@ -6,8 +6,8 @@
 
 start(Game, I, Time) ->
     if 
-        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, {0.0, 0.0}, math:pi()/2, 0.0, 0.0}, {0,0}, Time) end);
-        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, {0.0, 0.0}, -math:pi()/2 , 0.0, 0.0}, {0,0}, Time) end)
+        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, {0.0, 0.0}, math:pi()/2, 0.0, 0.0}, {3,100}, Time) end);
+        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, {0.0, 0.0}, -math:pi()/2 , 0.0, 0.0}, {3,100}, Time) end)
     end.
 
 keyFun(Champion, TcpMesg, NowTime) -> 
@@ -26,17 +26,45 @@ loop(Game, State, Life, LastTime) ->
             NewState = aux_KeyFun(State, Life, Data, LastTime-NowTime),
             loop(Game, NewState, Life, NowTime);
 
+
         {eval, NowTime, Game} -> 
-            NewState = update(State, Life, LastTime-NowTime),
-            {Pos,_,_,_,_,_} = NewState,
-            StringState = toString(NewState, Life),
-            Game ! {ok, {StringState, Pos}, self()},
-            loop(Game, NewState, Life, NowTime)
+            {NewState, NewLife} = evalAux(Game, State, Life, LastTime-NowTime),
+            loop(Game, NewState, NewLife, NowTime);
+
+
+        {lostLife, Game} ->
+            {Health, Stamina} = Life,
+            NewHealth = Health-1,
+            if 
+                   Health<0 -> Game ! {dead, self()};
+                   true -> loop(Game, State, {NewHealth, Stamina}, LastTime)
+            end;
+
+        {finish, Game} -> free
+
+
     end.
 
 
 %--------------------------------------------------
 
+evalAux(Game, State, Life, Dtime) ->
+    NewState = update(State, Life, Dtime),
+    {Pos,_,_,_,_,_} = NewState,
+    {Health, Stamina} = Life,
+    {X, Y} = Pos, 
+    if 
+        (X>1) or (X<0) or (Y>1) or (Y<1) -> 
+            NewHealth = Health - 1,
+            StringState = toString(NewState, {NewHealth, Stamina}),
+            Game ! {ok, {StringState, Pos}, self()},
+            {NewState, {NewHealth, Stamina}};
+
+        true ->
+            StringState = toString(NewState, {Health, Stamina}),
+            Game ! {ok, {StringState, Pos}, self()},
+            {NewState, {Health, Stamina}}
+    end.
 
 
 
@@ -71,7 +99,7 @@ aux_KeyFun(State, Life, Data, NowTime) ->
     case KeyState of
         <<"press">> -> 
             case KeyCode of
-                <<"up">>    -> {Pos, Vel, {math:cos(A)*0.0000000001, math:cos(A)*0.0000000001}, A, Va, Acca};
+                <<"up">>    -> {Pos, Vel, {math:cos(A)*0.000000000001, math:cos(A)*0.000000000001}, A, Va, Acca};
                 <<"left">>  -> {Pos, Vel, Acc, A, Va, -0.0000001};
                 <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0000001}
             end;

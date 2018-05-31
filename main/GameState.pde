@@ -4,8 +4,9 @@ import java.util.regex.*;
 ArrayList<Berrie> stringToListVagas(String s){
         ArrayList<Berrie> ret = new ArrayList<Berrie>();
 
-        s = s.substring(1, s.length()-1);
-        String[] m = s.split(",");
+        if(s.length() <= 2) return ret;
+        s = s.substring(2, s.length()-2);
+        String[] m = s.split("\\};\\{");
         for(String stringBerrie:m) ret.add(new Berrie(stringBerrie)); 
 
         return ret;
@@ -17,16 +18,13 @@ class Berrie{
     PVector pos;
 
     Berrie(String s) {
-       // System.out.println("reconhecer Berrie\n");
-       // s = s.substring(1, s.length()-1);
-       // String[] res = s.split(",");
-       // Pattern r = Pattern.compile("{(.*),(.*)}");
-       // Matcher m = r.matcher(s);
+       Pattern r = Pattern.compile("([^,]*),([^,]*)");
+       Matcher m = r.matcher(s);
 
-       // if(m.find()){
-       //     System.out.println("reconheceu Berrie\n");
-       //     this.pos = new Vector(m.group(0));
-       // }
+       if(m.find()){
+            System.out.println("reconheceu Berrie\n");
+            this.pos = new PVector(Float.parseFloat(m.group(1)), Float.parseFloat(m.group(2)));
+       }
     }
 
     void display(boolean isRed) {
@@ -34,7 +32,7 @@ class Berrie{
         strokeWeight(2);
         if(isRed) fill(255,0,0);
         else fill(0,255,0);
-        ellipse(pos.x,pos.y,2*radius,2*radius);
+        ellipse(this.pos.x * rJX, this.pos.y * rJY, 2*radius, 2*radius);
   }
 
 }
@@ -121,8 +119,8 @@ class GameState{
             //System.out.println("reconheceu gamestate\n");
             this.champs[0] = new Champion(m.group(1));
             this.champs[1] = new Champion(m.group(2));
-            //this.redBerries = stringToListVagas(m.group(2));
-            //this.greenBerries = stringToListVagas(m.group(3));
+            this.redBerries = stringToListVagas(m.group(3));
+            this.greenBerries = stringToListVagas(m.group(4));
         }
     }
 

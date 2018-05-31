@@ -1,5 +1,5 @@
 -module(login_manager).
--export([start/0, signin/2, close_account/2, login/2, logout/1]).
+-export([start/0, signin/2, close_account/2, login/2, logout/1, win/1]).
 
 %--------------------------------------------------
 % API
@@ -24,6 +24,10 @@ logout(User) ->
     ?MODULE ! {logout, User, self()},
     receive {Res, ?MODULE} -> Res end.
 
+win(User) -> 
+    ?MODULE ! {win, User}.
+
+
 %--------------------------------------------------
 
 loop(Map) ->
@@ -34,7 +38,9 @@ loop(Map) ->
 
         {login, User, Pass, From} -> aux_login( User, Pass, From, Map);
 
-        {logout, User, From} -> aux_logout(User, From, Map)
+        {logout, User, From} -> aux_logout(User, From, Map);
+
+        {win, User} -> aux_win(User, Map)
 
     end.
 
@@ -83,6 +89,17 @@ aux_login(User, Pass, From, Map) ->
                 true ->
                     From ! {invalid_pass, ?MODULE},
                     loop(Map)
+            end
+    end.
+
+aux_win(User, Map) ->
+    case maps:find(User, Map) of 
+        error -> loop(Map);
+        {ok, {P, Level, Exp, State}} ->
+            NewExp = Exp+1,
+            if
+                NewExp>=Level -> loop(maps:update(User, {P, Level+1, 0, State}));
+                true -> loop(maps:update(User, {P, Level, NewExp, State}))
             end
     end.
 

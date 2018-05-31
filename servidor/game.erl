@@ -22,12 +22,14 @@ init(GameManager, Client1, Client2) ->
     LastTime = erlang:monotonic_time(millisecond),
     Clients = [Client1 , Client2],
     Champions = [champion:start(self(), 1, LastTime), champion:start(self(), 2, LastTime)],
-    Berries = [berries:start(self(), red), berries:start(self(), green)], 
+    RB = berries:start(self(), red),
+    GB = berries:start(self(), green),
     {ok, TimerEval} = timer:send_interval(100, {eval, self()}),
-    {ok, TimerEnemy} = timer:send_interval(10000, {send_enemy, self()}),
-    Timers = [TimerEval, TimerEnemy],
+    {ok, TimerEnemy} = timer:send_interval(3000, RB, {send_enemy, self()}),
+    {ok, TimerFriend} = timer:send_interval(60000, GB, {send_friend, self()}),
+    Timers = [TimerEval, TimerEnemy, TimerFriend],
     [ C ! {start, self()} || C <- Clients],
-    loop({GameManager, Clients, {Champions, Berries}, Timers, LastTime}).
+    loop({GameManager, Clients, {Champions, [RB, GB]}, Timers, LastTime}).
 
 
 
@@ -36,7 +38,7 @@ loop(Args) ->
     Self = self(),
     {_GameManager, Clients, State, _Timers, _LastTime} = Args,
     [Client1 | [Client2 | _]] = Clients,
-    {Champions, _Berries} = State,
+    {Champions, Berries} = State,
     [Champion1 | [Champion2 | _]] = Champions,
 
     NowTime = erlang:monotonic_time(millisecond),
@@ -52,10 +54,12 @@ loop(Args) ->
             champion:keyFun(Champion2, TcpMsg, NowTime),
             loop(Args);
 
-        % timer de criacao de inimigo
-        {send_enemy, Self} -> 
-            NewArgs = addEnemy(Args),
-            loop(NewArgs);
+        {dead, Client1} -> 
+            Champion2 ! {finish, self()},
+            [B ! {finish, self()} || B <- Berries],
+            Client2 ! {win, self()},
+            Client1 ! {lost, self()},
+            free;
 
         {eval, Self} -> 
             NewArgs = eval(Args),
@@ -65,10 +69,6 @@ loop(Args) ->
     end.
 
 %--------------------------------------------------
-
-addEnemy(Args) ->
-    % adicionar inimigos a RedBerries
-    Args.
 
 eval(Args) ->
     NowTime = erlang:monotonic_time(millisecond),
@@ -84,8 +84,8 @@ eval(Args) ->
 
     % verificar se hove colisoes calcular nova posicao das berries
     [berries:eval(ListB, {P1, P2},LastTime-NowTime) || ListB <- Berries],
-    {BR, ColG1, ColG2} = receive {ok, AnsR, RedB} -> AnsR end,
-    {BG, ColG1, ColG2} = receive {ok, AnsG, GreenB} -> AnsG end,
+    {BR, _ColRed1, _ColRed2} = receive {ok, AnsR, RedB} -> AnsR end,
+    {BG, _ColGreen1, _ColGreen2} = receive {ok, AnsG, GreenB} -> AnsG end,
     State_String = lists:flatten(lists:concat([Ch1," ",Ch2," ",BR," ",BG,"\n"])),
     [ Cl ! {state, State_String, self()} || Cl <- Clients],
     {GameManager, Clients, State, Timers, NowTime}.

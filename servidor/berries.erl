@@ -4,6 +4,8 @@
 %--------------------------------------------------
 % API
 
+
+
 start(Game, Color) ->
     spawn(fun() -> loop(Game, Color,[]) end).
 
@@ -15,14 +17,24 @@ eval(Champion, Players, DiffTime) ->
 loop(Game, Color, Berries) ->
     receive
         {eval, Players, Dtime, Game} -> 
-            NewBerries = update(Berries, Color, Players, Dtime),
+            {NewBerries, C1, C2} = update(Berries, Color, Players, Dtime),
             StringState = toString(NewBerries),
-            Game ! {state, StringState, self()},
+            Game ! {ok, {StringState, C1, C2}, self()},
             loop(Game, Color, Berries);
 
-        {send_enemy,Game} ->
+
+        {send_enemy, Game} ->
             New_Berries = addBerrie(Berries),
-            loop(Game, Color, New_Berries)
+            loop(Game, Color, New_Berries);
+
+        {send_friend, Game} ->
+            New_Berries = addBerrie(Berries),
+            loop(Game, Color, New_Berries);
+
+        {finish, Game} -> free
+
+
+
 
     end.
 
@@ -30,7 +42,7 @@ loop(Game, Color, Berries) ->
 
 
 addBerrie(Berries) ->
-    {rand:uniform(), rand:uniform()} ++ Berries.
+    [{rand:uniform(), rand:uniform()} | Berries].
 
 
 update(Berries, Color, Players, Dtime) when Color == red    -> updateRed(Berries, Players, Dtime);
@@ -54,9 +66,22 @@ noCollision({Bx, By}, {Px,Py}) ->
     math:sqrt( math:pow((Px-Bx),2) + math:pow((Py-By),2) ) < 24.
 
 % tranformar em sring
-toString(Berries) ->
-    BerriesString = lists:foldr(fun(X) -> berrieToString(X) end, "",Berries),
-    io_lib:format("[" ,BerriesString ,"]").
 
-berrieToString({X, Y}) ->
-    io_lib:format("~p,~p", [X,Y]).
+
+toString(Berries) ->
+    string:join(["[" , toStringAux(Berries) ,"]"], "").
+
+toStringAux([]) -> "";
+toStringAux([H | T]) -> 
+    {X,Y} = H,
+    Point = io_lib:format("{~p,~p}", [X,Y]),
+    if 
+        T == [] -> 
+            string:join([Point,toStringAux(T)], "");
+        true->
+	        string:join([Point,toStringAux(T)], ";")
+    end.
+
+
+
+

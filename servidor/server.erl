@@ -82,7 +82,7 @@ eval_lm(Sock, Comand, Args) ->
 
 
 %--------------------------------------------------
-% comunicacao cliente com login manager
+% comunicacao cliente com Game manager
 clientLoop_GameManager(Sock, PlayerInfo) ->
     {User, _Pass, _Level, _Exp} = PlayerInfo,
     receive
@@ -147,7 +147,11 @@ clientLoop_Game(Sock, PlayerInfo, Game) ->
             clientLoop_Game(Sock, PlayerInfo, Game);
 
         % receber fim de jogo 
-        {finish, Game} -> 
+        {won, Game} -> 
+            login_manager:win(User),
+            ok = gen_tcp:send(Sock, "end\n"),
+            clientLoop_GameManager(Sock, PlayerInfo);
+        {lost, Game} -> 
             ok = gen_tcp:send(Sock, "end\n"),
             clientLoop_GameManager(Sock, PlayerInfo);
 
