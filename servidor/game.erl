@@ -64,7 +64,7 @@ loop(Args) ->
 
 eval(Args) ->
     NowTime = erlang:monotonic_time(millisecond),
-    {GameManager, Clients, State, Timers, LastTime} = Args,
+    {_GameManager, Clients, State, _Timers, LastTime} = Args,
     {Champions, Berries} = State,
     [Champion1 | [Champion2 | _]] = Champions,
     [Client1|[Client2|_]] = Clients,
@@ -91,11 +91,15 @@ eval(Args) ->
 
     % verificar se hove colisoes calcular nova posicao das berries
     [berries:eval(ListB, {P1, P2},LastTime-NowTime) || ListB <- Berries],
-    {BR, _ColRed1, _ColRed2} = receive {ok, AnsR, RedB} -> AnsR end,
-    {BG, _ColGreen1, _ColGreen2} = receive {ok, AnsG, GreenB} -> AnsG end,
+    {BR, ColRed1, ColRed2} = receive {ok, AnsR, RedB} -> AnsR end,
+    Champion1 ! {lostLife, ColRed1, self()},
+    Champion2 ! {lostLife, ColRed2, self()},
+    {BG, ColGreen1, ColGreen2} = receive {ok, AnsG, GreenB} -> AnsG end,
+    Champion1 ! {earnStamina, ColGreen1, self()},
+    Champion2 ! {earnStamina, ColGreen2, self()},
     State_String = lists:flatten(lists:concat([Ch1," ",Ch2," ",BR," ",BG,"\n"])),
     [ Cl ! {state, State_String, self()} || Cl <- Clients],
-    loop({GameManager, Clients, State, Timers, NowTime}).
+    loop(Args).
 
 
 

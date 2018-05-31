@@ -28,7 +28,7 @@ loop(Game, Color, Berries) ->
             {NewBerries, C1, C2} = update(Berries, Color, Players, Dtime),
             StringState = toString(NewBerries),
             Game ! {ok, {StringState, C1, C2}, self()},
-            loop(Game, Color, Berries);
+            loop(Game, Color, NewBerries);
 
         {finish, Game} -> free
 
@@ -47,19 +47,21 @@ update(Berries, Color, Players,_Dtime) when Color == green  -> updateGreen(Berri
 
 
 updateGreen(Berries, {P1, P2}) ->
+    Len = lists:flatlength(Berries),
     C1 = lists:filter(fun(B) -> noCollision(B, P1) end, Berries),
     C2 = lists:filter(fun(B) -> noCollision(B, P2) end, Berries),
-    {ordsets:intersection(C1, C2), lists:flatlength(C1), lists:flatlength(C2)}.
+    {ordsets:intersection(C1, C2), Len-lists:flatlength(C1), Len-lists:flatlength(C2)}.
 
 updateRed(Berries, {P1, P2},_Dtime) ->
+    Len = lists:flatlength(Berries),
     C1 = lists:filter(fun(B) -> noCollision(B, P1) end, Berries),
     C2 = lists:filter(fun(B) -> noCollision(B, P2) end, Berries),
-    {ordsets:intersection(C1, C2), lists:flatlength(C1), lists:flatlength(C2)}.
+    {ordsets:intersection(C1, C2), Len-lists:flatlength(C1), Len-lists:flatlength(C2)}.
 
 
 
 noCollision({Bx, By}, {Px,Py}) ->
-    math:sqrt( math:pow((Px-Bx),2) + math:pow((Py-By),2) ) < 12.
+    math:sqrt( math:pow((Px-Bx),2) + math:pow((Py-By),2) ) > 36/800.
 
 % tranformar em sring
 

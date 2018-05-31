@@ -39,15 +39,16 @@ class Berrie{
 
 class Champion{
     final float radius = 24;
-    PVector pos, vel, ace;
+    PVector pos, vel;
+    float ace;
     float angle, velAng, aceAng;
     int health;
     int stamina;
 
-    Champion(float x, float y ,float vx, float vy, float ax, float ay, float angle, float va, float aa, int health, int stamina){
+    Champion(float x, float y ,float vx, float vy, float ace, float angle, float va, float aa, int health, int stamina){
         this.pos    = new PVector(x,y);
         this.vel    = new PVector(vx,vy);
-        this.ace    = new PVector(ax, ay);
+        this.ace    = ace;
         this.angle  = angle; 
         this.velAng = va; 
         this.aceAng = aa;    
@@ -58,7 +59,7 @@ class Champion{
     Champion(float x, float y, float angle){
         this.pos = new PVector(x, y);
         this.vel = new PVector(0.0, 0.0);
-        this.ace = new PVector(0.0, 0.0);
+        this.ace = 0.0;
         this.angle = 0.0;
         this.velAng = 0.0;
         this.aceAng = 0.0;
@@ -67,19 +68,19 @@ class Champion{
     }
 
     Champion(String s){
-        Pattern r = Pattern.compile("\\{([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\\}]*)\\}");
+        Pattern r = Pattern.compile("\\{([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^,]*),([^\\}]*)\\}");
         Matcher m = r.matcher(s);
 
         if(m.find()){
             //System.out.println("reconheceu Champion\n");
             this.pos    = new PVector(Float.parseFloat(m.group(1)), Float.parseFloat(m.group(2)));
             this.vel    = new PVector(Float.parseFloat(m.group(3)), Float.parseFloat(m.group(4)));
-            this.ace    = new PVector(Float.parseFloat(m.group(5)), Float.parseFloat(m.group(6)));
-            this.angle  = Float.parseFloat(m.group(7));
-            this.velAng = Float.parseFloat(m.group(8));
-            this.aceAng = Float.parseFloat(m.group(9));
-            this.health = Integer.parseInt(m.group(10));
-            this.stamina= Integer.parseInt(m.group(11));
+            this.ace    = Float.parseFloat(m.group(5));
+            this.angle  = Float.parseFloat(m.group(6));
+            this.velAng = Float.parseFloat(m.group(7));
+            this.aceAng = Float.parseFloat(m.group(8));
+            this.health = Integer.parseInt(m.group(9));
+            this.stamina= Integer.parseInt(m.group(10));
         }
     }
 
