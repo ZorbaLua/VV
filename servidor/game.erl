@@ -1,11 +1,13 @@
 -module(game).
 -export([start/2, pleft/1, pfront/1, pright/1, rleft/1, rfront/1, rright/1]).
 
-%GInfo    : {{ pos1, vel1, acc1, a1, va1, acca1 }, { pos2, vel2, acc2, a2, va2, acca2 }, [VVm], {VVd, VVd} }
+%GInfo    : {{ pos1, vel1, acc1, a1, va1, acca1 }, { pos2, vel2, acc2, a2, va2, acca2 }, [VVm], {VVd, VVd}, Rp, Rv }
 ini_GInfo() -> {{{0.1, 0.5}, {0, 0}, {0, 0}, 0, 0, 0},
                 {{0.4, 0.5}, {0, 0}, {0, 0}, math:pi(), 0, 0},
                 [],
-                {{rand:uniform(), rand:uniform()}, {rand:uniform(), rand:uniform()}}
+                {{rand:uniform(), rand:uniform()}, {rand:uniform(), rand:uniform()}},
+                1/20,
+                1/22
                 }.
 
 %Interval : #{ Key => {{p|r, TS, T1}, {p|r, TS, T2}}}
@@ -30,18 +32,20 @@ in_game(Pos) ->
     {X1,Y1} = Pos,
     (X1>=0) and (X1<1) and (Y1>=0) and (Y1<1).
 
-%Raio do jogador = ?
-%Raio das vagas  = ?
-%
 % 0 <= X < 1
 % 0 <= Y < 1
 %
+%Rp       : Raio do jogador
+%Rv       : Raio das vagas
+%PlState  : { pos, vel, acc, a, va, acca } 
 %Player   : {User, Pid}
-%VVd, VVm : {x, y}
+%VVd      : {pos1, pos2}
+%VVm      : [pos]
+%pos      : {x, y}
 game(Player1, Player2, GInfo, Interval) ->
     {_, Pid1} = Player1,
     {_, Pid2} = Player2,
-    {PlState1, PlState2, VVm, VVd} = GInfo,
+    {PlState1, PlState2, VVm, VVd, Rp, Rv} = GInfo,
     receive
         {press, Key, From}  ->
             {ok, {P1, P2}} = maps:find(Key, Interval),
@@ -70,32 +74,32 @@ game(Player1, Player2, GInfo, Interval) ->
 
         send_now -> 
             {New_GInfo, New_Interval} = update(GInfo, Interval),
-            {Pos1, _} = PlState1,
-            {Pos2, _} = PlState2,
+            {Pos1, _, _, _, _, _} = PlState1,
+            {Pos2, _, _, _, _, _} = PlState2,
             case {in_game(Pos1), in_game(Pos2)} of
                 {true, true} -> 
                     Pid2 ! Pid1 ! {game_info, New_GInfo},
                     game(Player1, Player2, New_GInfo, New_Interval);
                 {true, false} -> 
-                    Pid2 ! lose,
-                    Pid1 ! win;
+                    Pid2 ! {game_over, lose},
+                    Pid1 ! {game_over, win};
                 {false, true} -> 
-                    Pid2 ! win,
-                    Pid1 ! lose;
+                    Pid2 ! {game_over, win},
+                    Pid1 ! {game_over, lose};
                 {false, false} ->
-                    Pid2 ! draw,
-                    Pid1 ! draw
+                    Pid2 ! {game_over, draw},
+                    Pid1 ! {game_over, draw}
             end;
         send_enemy ->
             game(Player1, Player2, 
                  {PlState1, PlState2, 
                   [{rand:uniform(), rand:uniform()} | VVm], 
-                  VVd}, Interval)
+                  VVd, Rp, Rv}, Interval)
     end.
 
 
 update(GInfo, Interval) ->
-    {{ Pos1, Vel1, _, A1, Va1, _ }, { Pos2, Vel2, _, A2, Va2, _ }, Vm, Vd } = GInfo,
+    {{ Pos1, Vel1, _, A1, Va1, _ }, { Pos2, Vel2, _, A2, Va2, _ }, Vm, Vd, Rp, Rv} = GInfo,
 
     {ok, {PL1, PL2}} = maps:find(left , Interval),
     {ok, {PF1, PF2}} = maps:find(front, Interval),
@@ -187,7 +191,8 @@ update(GInfo, Interval) ->
     New_Pos2 = {0.1*New_Vel2x + Pos2x, 0.1*New_Vel2y + Pos2y},
     
     New_GInfo = {{ New_Pos1, New_Vel1, New_Acc1, New_A1, New_Va1, New_Acca1 }, 
-                 { New_Pos2, New_Vel2, New_Acc2, New_A2, New_Va2, New_Acca2 }, Vm, Vd },
+                 { New_Pos2, New_Vel2, New_Acc2, New_A2, New_Va2, New_Acca2 }, 
+                 Vm, Vd, Rp, Rv },
 
     {New_GInfo, New_Interval}.
 

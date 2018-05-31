@@ -1,5 +1,5 @@
 -module(login_manager).
--export([start_loginM/0, create_account/2, login/2, logout/1]).
+-export([start_loginM/0, create_account/2, login/2, logout/1, top3/0]).
 
 start_loginM() ->
     LM = spawn(fun()-> login_manager(#{}) end),
@@ -25,6 +25,16 @@ logout(User) ->
         {Ans, ?MODULE} -> Ans
     end.
 
+top3() ->
+    ?MODULE ! {top3, self()},
+    List = receive
+               {M, ?MODULE} -> lists:map(fun({U, {_, _, L, E, _}}) -> {U, L, E} end, maps:to_list(M))
+           end,
+    case lists:reverse(lists:keysort(2, lists:keysort(3, List))) of
+        [E1]                   -> {1, [E1]};
+        [E1, E2]               -> {2, [E1, E2]};
+        [E1 | [E2 | [E3 | _]]] -> {3, [E1, E2, E3]}
+    end.
 
 %online() ->
 %    ?MODULE ! {online, self()},
@@ -68,5 +78,8 @@ login_manager(Map) ->
                 {ok, {Pass, _, Pid, Level, Exp}}->
                     From ! {ok, ?MODULE},
                     login_manager(maps:update(User, {Pass, false, Level, Exp, Pid}, Map))
-            end
+            end;
+        {top3, From} ->
+            From ! {Map, ?MODULE},
+            login_manager(Map)
     end.

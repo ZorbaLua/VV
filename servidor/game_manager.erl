@@ -23,7 +23,7 @@ game_manager(Players) ->
                 [H | _] ->
                     {User_H, _, Pid_H} = H,
                     Gamepid = start({User_H, Pid_H}, {User, From}),
-                    From ! Pid_H ! {Gamepid, ?MODULE},
+                    From ! Pid_H ! {start_game, Gamepid},
                     game_manager(Players -- [H])
             end
     end.

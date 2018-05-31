@@ -19,7 +19,7 @@ void keyReleased() {
 
 void mousePressed() {
   if      (btn[0].MouseIsOver() && menuState == 1) { if(play()); menuState = 2; }
-  else if (btn[1].MouseIsOver() && menuState == 1) { ; }
+  else if (btn[1].MouseIsOver() && menuState == 1) { for(String s : reload_rank()) System.out.println(s); }
   else if (btn[2].MouseIsOver() && menuState == 1) { signout(); menuState = 0; }
   else if (btn[3].MouseIsOver() )                  { ; }
   else if (btn[4].MouseIsOver() )                  { exit(); }

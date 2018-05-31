@@ -112,7 +112,7 @@ class Ponto {
   }
 
 }
-
+/*
 void drawHeart(int x, int y) {
   beginShape();
     vertex(50+x, 15+y);
@@ -121,5 +121,5 @@ void drawHeart(int x, int y) {
     bezierVertex(50+x, -5+y, 10+x, 5+y, 50+x, 40+y);
   endShape();
 }
-
+*/
 // -------------------------------------------------------------------------- //

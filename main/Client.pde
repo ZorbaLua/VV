@@ -60,11 +60,10 @@ public class Client {
         public void send(int keycode, boolean isPress){
             try{
                 String type  = isPress ? "press " : "release ";
-                switch (keyCode) {
-                    case UP:    this.buf.put("$" + type + "up");     break;
-                    case DOWN:  this.buf.put("$" + type + "down");   break;
-                    case LEFT:  this.buf.put("$" + type + "left");   break;
-                    case RIGHT: this.buf.put("$" + type + "right");  break;
+                switch (keycode) {
+                    case UP:    this.buf.put(type + "front");     break;
+                    case LEFT:  this.buf.put(type + "left");   break;
+                    case RIGHT: this.buf.put(type + "right");  break;
                     default: break;
                 }
             }
@@ -99,7 +98,7 @@ public class Client {
 
     public boolean singin(String user, String pass){
         boolean ret = false;
-        out.println("");
+        out.println("1");
         out.println(user);
         out.println(pass);
         try{ String a = in.readLine(); ret = a.equals("ok"); System.out.println(a);}
@@ -110,13 +109,31 @@ public class Client {
     public void singout(){
         out.println("logout");
     }
+    
+    public ArrayList<String> reload_rank(){
+        ArrayList<String> res = new ArrayList<String>();
+        out.println("top3");
+        try{
+            String a = in.readLine();
+            System.out.println(a);
+            int quant = Integer.parseInt(a);
+            for(int i = 0; i<quant; i++){
+                res.add(in.readLine());
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+            System.exit(0);
+        }
+        return res;
+    }
 
     public boolean play(){
         boolean ret = false;
         try{
-            out.println("$play");
+            out.println("play");
             ret = in.readLine().equals("ok");
             if(ret){
+                System.out.println("Correu bem\n");
                 this.receiver = new Receiver();
                 new Thread(this.receiver).start();
                 this.sender = new Sender();

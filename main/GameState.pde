@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 
 ArrayList<Berrie> stringToListVagas(String s){
         ArrayList<Berrie> ret = new ArrayList<Berrie>();

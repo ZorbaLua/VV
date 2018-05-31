@@ -84,6 +84,10 @@ boolean singin() {
 void signout(){
     client.singout();
 }
+ArrayList<String> reload_rank(){
+    return client.reload_rank();
+}
+
 
 boolean play() {
     return client.play();
