@@ -54,7 +54,7 @@ public class Client {
             System.out.println(line);
             ret = line.equals("ok");
         }
-        catch(Exception e){ e.printStackTrace(); System.exit(0); }
+        catch(Exception e){ showMessageDialog(null, "Erro Login Falhado", "Erro Login Falhado",ERROR_MESSAGE); e.printStackTrace(); System.exit(0); }
         return ret;
     }
 
