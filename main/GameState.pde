@@ -84,7 +84,7 @@ class Champion{
         }
     }
 
-    void display(){
+    void display(boolean isFirst){
 
         if (this == client.gameState.champs[0]) {drawHP(50,50,health,stamina);} else {drawHP(50,150,health,stamina);}
 
@@ -130,7 +130,11 @@ class GameState{
     }
 
     synchronized void display(){
-        for(Champion champ: this.champs) champ.display();
+        boolean isFirst = true;
+        for(Champion champ: this.champs){
+            champ.display(isFirst);
+            isFirst = false;
+        }
         for(Berrie rb: redBerries) rb.display(true);
         for(Berrie gb: greenBerries) gb.display(false);
     }

@@ -6,8 +6,8 @@
 
 start(Game, I, Time) ->
     if 
-        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, 0.0, math:pi()/2, 0.0, 0.0}, {3,100}, Time) end);
-        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, 0.0, -math:pi()/2 , 0.0, 0.0}, {3,100}, Time) end)
+        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, 0.0,  math:pi()/4, 0.0, 0.0}, {3,100}, Time) end);
+        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, 0.0, -math:pi()/4, 0.0, 0.0}, {3,100}, Time) end)
     end.
 
 keyFun(Champion, TcpMesg, NowTime) -> 
