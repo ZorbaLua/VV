@@ -67,34 +67,25 @@ eval(Args) ->
     {_GameManager, Clients, State, _Timers, LastTime} = Args,
     {Champions, Berries} = State,
     [Champion1 | [Champion2 | _]] = Champions,
-    [Client1|[Client2|_]] = Clients,
     [RedB | [GreenB | _]] = Berries,
 
     % caluclar nova posicao do jogadores
     [champion:eval(Ch, NowTime) || Ch <- Champions],
     {Ch1, P1} = receive 
                     {ok, A1, Champion1} -> A1;
-                    {dead, Champion1} -> 
-                        Champion2 ! {finish, self()},
-                        [B ! {finish, self()} || B <- Berries],
-                        Client2 ! {win, self()},
-                        Client1 ! {lost, self()}
+                    {dead, Champion1} -> termina(1, Args)
                 end,
     {Ch2, P2} = receive 
                     {ok, A2, Champion2} -> A2;
-                    {dead, Champion2} -> 
-                        Champion1 ! {finish, self()},
-                        [B ! {finish, self()} || B <- Berries],
-                        Client1 ! {win, self()},
-                        Client2 ! {lost, self()}
+                    {dead, Champion2} -> termina(2, Args)
                 end,
 
     % verificar se hove colisoes calcular nova posicao das berries
     [berries:eval(ListB, {P1, P2},LastTime-NowTime) || ListB <- Berries],
     {BR, ColRed1, ColRed2} = receive {ok, AnsR, RedB} -> AnsR end,
+    {BG, ColGreen1, ColGreen2} = receive {ok, AnsG, GreenB} -> AnsG end,
     Champion1 ! {lostLife, ColRed1, self()},
     Champion2 ! {lostLife, ColRed2, self()},
-    {BG, ColGreen1, ColGreen2} = receive {ok, AnsG, GreenB} -> AnsG end,
     Champion1 ! {earnStamina, ColGreen1, self()},
     Champion2 ! {earnStamina, ColGreen2, self()},
     State_String = lists:flatten(lists:concat([Ch1," ",Ch2," ",BR," ",BG,"\n"])),
@@ -103,6 +94,25 @@ eval(Args) ->
 
 
 
+
+termina(P, Args)->
+    {_GameManager, Clients, State, _Timers, _LastTime} = Args,
+    {Champions, Berries} = State,
+    [Champion1 | [Champion2 | _]] = Champions,
+    [Client1|[Client2|_]] = Clients,
+    if
+        P==1 ->
+            Champion2 ! {finish, self()},
+            [B ! {finish, self()} || B <- Berries],
+            Client2 ! {win, self()},
+            Client1 ! {lost, self()};
+        true ->
+            Champion1 ! {finish, self()},
+            [B ! {finish, self()} || B <- Berries],
+            Client1 ! {win, self()},
+            Client2 ! {lost, self()}
+    end,
+    loop(Args).
 
 
 

@@ -22,7 +22,7 @@ class Berrie{
        Matcher m = r.matcher(s);
 
        if(m.find()){
-            System.out.println("reconheceu Berrie\n");
+            //System.out.println("reconheceu Berrie\n");
             this.pos = new PVector(Float.parseFloat(m.group(1)), Float.parseFloat(m.group(2)));
        }
     }
@@ -84,9 +84,10 @@ class Champion{
         }
     }
 
-    void display(boolean isFirst){
+    void display(){
 
-        if (this == client.gameState.champs[0]) {drawHP(50,50,health,stamina);} else {drawHP(50,150,health,stamina);}
+        if (this == client.gameState.champs[0]) {drawHP(50,50,health,stamina);} 
+        else {drawHP(50,150,health,stamina);}
 
         // vida
         float dx = this.pos.x * rJX;
@@ -96,11 +97,11 @@ class Champion{
         fill(127);
         ellipse(dx,dy,2*radius,2*radius);
         fill(255);
-        ellipse( sin(this.angle+0.3)*20+dx, cos(this.angle+0.3)*20+dy,20,20);
-        ellipse( sin(this.angle-0.3)*20+dx, cos(this.angle-0.3)*20+dy,20,20);
-        fill(0);
-        ellipse( sin(this.angle+0.3)*20+dx, cos(this.angle+0.3)*20+dy,10,10);
-        ellipse( sin(this.angle-0.3)*20+dx, cos(this.angle-0.3)*20+dy,10,10);
+        ellipse( cos(this.angle+0.3)*20+dx, -sin(this.angle+0.3)*20+dy,20,20);
+        ellipse( cos(this.angle-0.3)*20+dx, -sin(this.angle-0.3)*20+dy,20,20);
+        fill(0);                                
+        ellipse( cos(this.angle+0.3)*20+dx, -sin(this.angle+0.3)*20+dy,10,10);
+        ellipse( cos(this.angle-0.3)*20+dx, -sin(this.angle-0.3)*20+dy,10,10);
     }
 }
 
@@ -110,8 +111,8 @@ class GameState{
     ArrayList<Berrie> greenBerries;
 
     GameState(){
-        this.champs[0] = new Champion(2,2,90); // 0
-        this.champs[1] = new Champion(-2,2,270); // 180
+        this.champs[0] = new Champion(0,0,0); // 0
+        this.champs[1] = new Champion(0,0,0); // 180
         this.redBerries = new ArrayList<Berrie>();
         this.greenBerries = new ArrayList<Berrie>();
     }
@@ -130,11 +131,7 @@ class GameState{
     }
 
     synchronized void display(){
-        boolean isFirst = true;
-        for(Champion champ: this.champs){
-            champ.display(isFirst);
-            isFirst = false;
-        }
+        for(Champion champ: this.champs) champ.display();
         for(Berrie rb: redBerries) rb.display(true);
         for(Berrie gb: greenBerries) gb.display(false);
     }

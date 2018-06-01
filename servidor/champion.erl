@@ -6,8 +6,8 @@
 
 start(Game, I, Time) ->
     if 
-        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, 0.0,  math:pi()/4, 0.0, 0.0}, {3,100}, Time) end);
-        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, 0.0, -math:pi()/4, 0.0, 0.0}, {3,100}, Time) end)
+        I == 1 -> spawn(fun() -> loop(Game, {{0.3, 0.5}, {0.0, 0.0}, 0.0, 0.0, 0.0, 0.0}, {3,100}, Time) end);
+        true   -> spawn(fun() -> loop(Game, {{0.7, 0.5}, {0.0, 0.0}, 0.0, math:pi(), 0.0, 0.0}, {3,100}, Time) end)
     end.
 
 keyFun(Champion, TcpMesg, NowTime) -> 
@@ -23,8 +23,8 @@ eval(Champion, NowTime) ->
 loop(Game, State, Life, LastTime) ->
     receive
         {keyFun, Data, NowTime, Game} -> 
-            NewState = aux_KeyFun(State, Life, Data, LastTime-NowTime),
-            loop(Game, NewState, Life, NowTime);
+            {NewState, NewLife}= aux_KeyFun(State, Life, Data, LastTime-NowTime),
+            loop(Game, NewState, NewLife, NowTime);
 
 
         {eval, NowTime, Game} -> evalAux(Game, State, Life, LastTime, NowTime);
@@ -32,13 +32,9 @@ loop(Game, State, Life, LastTime) ->
 
         {lostLife, I, Game} ->
             {Health, Stamina} = Life,
-            NewHealth = Health-I,
-            if 
-                   Health<0 -> Game ! {dead, self()};
-                   true -> loop(Game, State, {NewHealth, Stamina}, LastTime)
-            end;
+            loop(Game, State, {Health-I, Stamina}, LastTime);
 
-        {earnStamina, I,Game} ->
+        {earnStamina, I, Game} ->
             {Health, Stamina} = Life,
             loop(Game, State, {Health, ((Stamina+I*30) rem 100)}, LastTime);
 
@@ -51,16 +47,16 @@ loop(Game, State, Life, LastTime) ->
 %--------------------------------------------------
 
 evalAux(Game, State, Life, LastTime, NowTime) ->
-    NewState = update(State, Life, LastTime-NowTime),
+    {NewState, NewLife} = update(State, Life, LastTime-NowTime),
     {Pos,_,_,_,_,_} = NewState,
-    {Health, Stamina} = Life,
+    {Health, Stamina} = NewLife,
     if 
         Health =< 0 -> Game ! {dead, self()};
         true ->
             {X, Y} = Pos, 
             if 
                 (X>1) or (X<0) or (Y>1) or (Y<0) -> 
-                    ResetState = {{0.5, 0.5},{0.0,0.0},0.0,math:pi(),0.0,0.0},
+                    ResetState = {{0.5, 0.5},{0.0,0.0},0.0,math:pi()/2,0.0,0.0},
                     StringState = toString(ResetState,{Health-1, Stamina}),
                     Game ! {ok, {StringState, Pos}, self()},
                     loop(Game,ResetState, {Health-1, Stamina}, NowTime);
@@ -68,7 +64,7 @@ evalAux(Game, State, Life, LastTime, NowTime) ->
                 true ->
                     StringState = toString(NewState, Life),
                     Game ! {ok, {StringState, Pos}, self()},
-                    loop(Game, NewState, Life, NowTime)
+                    loop(Game, NewState, NewLife, NowTime)
             end
     end.
 
@@ -81,12 +77,18 @@ update(State, Life, Dtime) ->
     {Pos, Vel, Ace, A, Va, Acca} = State,
     {Health, Stamina} = Life,
     update(Pos, Vel, Ace, A, Va, Acca, Dtime, Health, Stamina).
-update({Posx, Posy}, {Velx, Vely}, Ac, Angle, AngularVelocity, AngularAcelaration, Dtime, _Health, _Stamina) ->
+update({Posx, Posy}, {Velx, Vely}, Ac, Angle, AngularVelocity, AngularAcelaration, Dtime, Health, Stamina) ->
     New_AngularVelocity= AngularAcelaration*Dtime + AngularVelocity,
     New_Angle = (New_AngularVelocity*Dtime + Angle),
+    Stamina_Ac = if 
+                     Stamina == 0 -> 0;
+                     true -> Ac
+                 end,
 
-    New_Acex = math:cos(New_Angle)*Ac,
-    New_Acey = math:sin(New_Angle)*Ac,
+
+
+    New_Acex = math:cos(New_Angle) *Stamina_Ac,
+    New_Acey = -math:sin(New_Angle)*Stamina_Ac,
 
     New_Velx = New_Acex*Dtime + Velx,
     New_Vely = New_Acey*Dtime + Vely,
@@ -94,28 +96,49 @@ update({Posx, Posy}, {Velx, Vely}, Ac, Angle, AngularVelocity, AngularAcelaratio
     New_Posx = New_Velx*Dtime + Posx,
     New_Posy = New_Vely*Dtime + Posy,
 
-    {{New_Posx, New_Posy}, {New_Velx, New_Vely}, Ac, New_Angle, New_AngularVelocity, AngularAcelaration}.
+    New_Stamina = calcStamina(Stamina,Ac,Dtime),
 
+    {{{New_Posx, New_Posy}, {New_Velx, New_Vely}, Ac, New_Angle, New_AngularVelocity, AngularAcelaration}, {Health, New_Stamina}}.
+
+
+
+calcStamina(Stamina, Ac, Dtime) ->
+    New_Stamina = if
+        Ac =/= 0.0 -> round(Stamina + 33*(Dtime/1000));
+        true -> round(Stamina + -33*(Dtime/1000))
+    end,
+    if
+        New_Stamina >= 100 -> 100;
+        New_Stamina < 0 -> 0;
+        true -> New_Stamina
+    end.
 
 % fazer update, retornat estado com acelarçao mudad
 aux_KeyFun(State, Life, Data, NowTime) ->
     [KeyState | [KeyCode | _]] = Data,
-    {Pos, Vel, Acc, A, Va, Acca} = update(State, Life, NowTime),
+    {NewState, NewLife} = update(State, Life, NowTime),
+    {Pos, Vel, Acc, A, Va, Acca} = NewState,
 
     case KeyState of
         <<"press">> -> 
             case KeyCode of
-                <<"up">>    -> {Pos, Vel, 1/10000000, A, Va, Acca};
-                <<"left">>  -> {Pos, Vel, Acc, A, Va,  1/1000000};
-                <<"right">> -> {Pos, Vel, Acc, A, Va, -1/1000000}
+                <<"up">>    -> {{Pos, Vel, 1/10000000, A, Va, Acca}, NewLife};
+                <<"left">>  -> {{Pos, Vel, Acc, A, Va,  1/1000000}, NewLife};
+                <<"right">> -> {{Pos, Vel, Acc, A, Va, -1/1000000}, NewLife};
+                _ -> 
+                    io:fwrite("invalid key"),
+                    {NewState, NewLife}
             end;
 
 
         <<"release">> -> 
             case KeyCode of
-                <<"up">>    -> {Pos, Vel, 0.0, A, Va, Acca};
-                <<"left">>  -> {Pos, Vel, Acc, A, Va, 0.0};
-                <<"right">> -> {Pos, Vel, Acc, A, Va, 0.0}
+                <<"up">>    -> {{Pos, Vel, 0.0, A, Va, Acca}, NewLife};
+                <<"left">>  -> {{Pos, Vel, Acc, A, Va, 0.0}, NewLife};
+                <<"right">> -> {{Pos, Vel, Acc, A, Va, 0.0}, NewLife};
+                _ -> 
+                    io:fwrite("invalid key"),
+                    {NewState, NewLife}
             end
     end.
 

@@ -7,8 +7,8 @@ Client client = new Client("localhost", 12345);
 // frame
 int rJX = 800, rJY = 600;
 int menuState;
-String[] playerInfo = {"User","---","Pass","---","Level","---","Exp","---"};
-String[] topPlayers = {"p1Nome","p1Pontos","p2Nome","p2Pontos","p3Nome","p3Pontos","p1Nome","p1Nivel","p2Nome","p2Nivel","p3Nome","p3Nivel"};
+String[] playerInfo;
+String[] topPlayers;
 Button[] btn = new Button[7];
 
 void drawInit(){
@@ -49,26 +49,34 @@ void drawMenu(){
 }
 
 void drawPlayerInfo(int x, int y) {
-   textAlign(LEFT);
-   String aux;
-   fill(255);
-   text ("Informacao Jogador", x, y);
-   for (int i = 0; i<4; i++) { aux = String.format("%s - %s", playerInfo[0+i*2], playerInfo[1+i*2]); text (aux, x, y+20+20*i); }
+    textAlign(LEFT);
+    String[] labels = {"User","Pass","Level","Exp"};
+    String aux;
+    fill(255);
+    text ("Informacao Jogador", x, y);
+    for (int i = 0; i<playerInfo.length; i++) {
+        aux = String.format("%s - %s", labels[i], playerInfo[i]);
+        text (aux, x, y+20+20*i); 
+    }
 
 }
 
 void drawRanks(int x, int y) {
-   textAlign(LEFT);
-   String aux;
-   fill(255);
-   text ("Top Pontos", x, y);
-   for (int i = 0; i<3; i++) { aux = String.format("%s - %s", topPlayers[0+i*2], topPlayers[1+i*2]); text (aux, x, y+20+20*i); }
+    textAlign(LEFT);
+    String aux;
+    fill(255);
+    //text ("Top Pontos", x, y);
+    //for (int i = 0; i<3; i++) { aux = String.format("%s - %s", topPlayers[0+i*2], topPlayers[1+i*2]); text (aux, x, y+20+20*i); }
 
-   text ("Top Nivel",    x, y+90);
-   for (int i = 0; i<3; i++) { aux = String.format("%s - %s", topPlayers[6+i*2], topPlayers[7+i*2]); text (aux, x, y+110+20*i); }
+    text ("Top Nivel",    x, y);
+    for (int i = 0; i<topPlayers.length; i+=3) {
+        aux = String.format("%s - Level:%s Exp:%s", topPlayers[i], topPlayers[i+1], topPlayers[i+2]);
+        text (aux, x, y+20+20*(i/3)); 
+    }
 }
 
 void drawHeart(int x, int y) {
+  fill(255,0,0);
   beginShape();
     vertex(50+x, 15+y);
     bezierVertex(50+x, -5+y, 90+x, 5+y, 50+x, 40+y);
@@ -78,7 +86,10 @@ void drawHeart(int x, int y) {
 }
 
 void drawGame() {
-    if(client.gameState == null) menuState = 1;
+    if(client.gameState == null) {
+        menuState = 1;
+        topPlayers = client.top3level();
+    }
     else{
         background(255);
         client.gameState.display();
@@ -87,7 +98,9 @@ void drawGame() {
 
 void drawHP(int x, int y, int vida, int energia){
   fill(0);
+  noStroke(); 
   for (int i=0; i<vida; i++) { drawHeart(x+50*i,y); }
+  fill(0,0,255);
   for (int i=0; i<energia; i++) { ellipse(i*3+x,y + 50,5,5); }
 }
 
@@ -120,10 +133,6 @@ boolean signin() {
     String pass = showInputDialog("Please enter password:");
     if(user==null || pass==null) return false;
     return client.signin(user, pass);
-}
-
-void signout(){
-    client.singout();
 }
 
 boolean play() {

@@ -6,7 +6,7 @@ BUFFER_SIZE = 1024
 
 def user(d):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    host = '192.168.1.6'
+    host = 'localhost'
     port = 12345                
 
     s.connect((host, port))
@@ -19,9 +19,13 @@ def user(d):
         msg = 'play\n'
         s.send(msg.encode())
 
-        while 1:
+        string = True
+        while string!="end\n":
             data = s.recv(BUFFER_SIZE)
-            print(data.decode())
+            string = data.decode()
+            msg='press up\npress right\n'
+            s.send(msg.encode())
+            print(string)
 
     data = s.recv(BUFFER_SIZE)
 

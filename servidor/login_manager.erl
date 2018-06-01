@@ -1,5 +1,5 @@
 -module(login_manager).
--export([start/0, signin/2, close_account/2, login/2, logout/1, win/1]).
+-export([start/0, signin/2, close_account/2, login/2, logout/1, top3level/0, win/1]).
 
 %--------------------------------------------------
 % API
@@ -24,6 +24,17 @@ logout(User) ->
     ?MODULE ! {logout, User, self()},
     receive {Res, ?MODULE} -> Res end.
 
+top3level() ->
+    ?MODULE ! {top3level, self()},
+    List = receive
+               {M, ?MODULE} -> lists:map(fun({U, {_, L, E, _}}) -> {U, L, E} end, maps:to_list(M))
+           end,
+    case lists:reverse(lists:keysort(2, lists:keysort(3, List))) of
+        [E1]                   -> [E1];
+        [E1, E2]               -> [E1, E2];
+        [E1 | [E2 | [E3 | _]]] -> [E1, E2, E3]
+    end.
+
 win(User) -> 
     ?MODULE ! {win, User}.
 
@@ -40,8 +51,9 @@ loop(Map) ->
 
         {logout, User, From} -> aux_logout(User, From, Map);
 
-        {win, User} -> aux_win(User, Map)
+        {win, User} -> aux_win(User, Map);
 
+        {top3level, From} -> From ! {Map, ?MODULE}, loop(Map)
     end.
 
 %--------------------------------------------------
@@ -51,7 +63,7 @@ aux_signin(User, Pass, From, Map) ->
     case maps:find(User, Map) of
         error ->
             From ! {ok, ?MODULE},
-            loop(maps:put(User ,{Pass, 0, 0, off}, Map));
+            loop(maps:put(User ,{Pass, 1, 0, off}, Map));
         _     ->
             From ! {user_exists, ?MODULE},
             loop(Map)
@@ -93,13 +105,14 @@ aux_login(User, Pass, From, Map) ->
     end.
 
 aux_win(User, Map) ->
+    io:fwrite("* end game\n"),
     case maps:find(User, Map) of 
         error -> loop(Map);
         {ok, {P, Level, Exp, State}} ->
             NewExp = Exp+1,
             if
-                NewExp>=Level -> loop(maps:update(User, {P, Level+1, 0, State}));
-                true -> loop(maps:update(User, {P, Level, NewExp, State}))
+                NewExp>=Level -> loop(maps:update(User, {P, Level+1, 0, State}, Map));
+                true -> loop(maps:update(User, {P, Level, NewExp, State}, Map))
             end
     end.
 
@@ -118,3 +131,4 @@ aux_logout(User, From, Map) ->
                     loop(maps:update(User, {Value, Level, Exp, off},  Map))
             end
     end.
+

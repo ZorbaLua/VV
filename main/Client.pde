@@ -71,23 +71,37 @@ public class Client {
         return ret;
     }
 
-    public void singout(){
+    public void logout(){
         out.println("logout");
+        System.out.println("logout");
     }
 
-    public void updateInfo() {
-      try{
-          System.out.println("ranks");
-          String line = in.readLine();
-          topPlayers = line.split("\\s+");
-
-          System.out.println("infojog");
-          line = in.readLine();
-          playerInfo  = line.split("\\s+");
-      }
-      catch(Exception e){ e.printStackTrace(); System.exit(0); }
+    public String[] top3level() {
+        String[] topPlayers = new String[0];
+        try{
+            out.println("top3level");
+            System.out.println("top3level");
+            String line = in.readLine();
+            topPlayers = line.split(" ");
+            //System.out.println(topPlayers[1]);
+        }
+        catch(Exception e){ e.printStackTrace(); System.exit(0); }
+        return topPlayers;
     }
 
+
+    public String[] info() {
+        String[] info = new String[0];
+        try{
+            out.println("info");
+            System.out.println("info");
+            String line = in.readLine();
+            info = line.split(" ");
+            //System.out.println(info[1]);
+        }
+        catch(Exception e){ e.printStackTrace(); System.exit(0); }
+        return info;
+    }
 
     public boolean play(){
         boolean ret = false;
